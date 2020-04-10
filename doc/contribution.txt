@@ -1,0 +1,49 @@
+The following file contains the contribution of each member for Milestone 1:
+
+1. Ankit Vutukuri
+    - Designed grammars for:
+        - Identifiers
+        - Functions 
+        - Print Statement
+        - Boolean Operators
+    - Converted Grammar to Antlr format(We are not using this anymore!)
+    - Research on Antlr
+
+2. Harmish Ganatra
+    - Designed grammars for :
+        - For loop
+        - List
+        - Return types
+        - Increment/ Decrement
+    - Converted Grammar to Antlr format (We are not using this anymore!)
+    - Research on Antlr
+
+3. Jubanjan Dhar
+    - Designed grammars for :
+        - Numeric type (int, float)
+        - Dictionary
+        - Ternary Operators
+        - Other Grammars (Grammar given in the assignment)
+    - Report for Milestone 1
+    - Research on PLY(Python Lex Yacc) 
+
+4. Sudhanva Hebbale
+    - Designed grammars for :
+        - Strings
+        - String Operations
+        - Type Casting
+        - Relation Operators
+    - Converted grammar to DCG format
+    - Created GitHub repo and directory structure
+
+
+Plan for the coming weeks:
+    - Week 1:
+        - Evaluation rules for the grammar in Assignment 3 and extras (Sudhanva)
+        - Building a lexer using Python NLTK (Ankit)
+        - Start building parser for new rules in Prolog (Harmish and Jubanjan)
+    
+    - Week 2:
+        - Build evaluation rules for the generated parse tree (Sudhanva, Harmish, Jubanjan)
+        - Integrate Lexer and Parser (Ankit)
+        - Test evaluation rule for a variety of test cases (All)
