@@ -1,124 +1,111 @@
-:- table expression/3, term/3, value/3.
-
 %----------------------------------- Main Section ----------------------------------------
-program(t_program(K)) --> [begin], beginningBlock(K), [end].
-beginningBlock(t_beginningBlock(DL, CL)) --> declarationList(DL), [ ; ],  commandList(CL).
-block(t_block(DL, CL)) --> ['{'], declarationList(DL), [ ; ],  commandList(CL),  [ '}' ].
+program --> [begin], beginningBlock, [end].
+beginningBlock --> declarationList, [ ; ],  commandList.
+block --> ['{'], declarationList, [ ; ],  commandList,  [ '}' ].
 
 %---------------------------------- Declaration Section ---------------------------------------
-declarationList(t_decList(D, DL)) --> declaration(D), [ ; ], declarationList(DL).
-declarationList(t_decList(D)) --> declaration(D).
-declaration(t_declaration(I)) -->  dataType, identifier(I).
-declaration(t_declaration(FD)) --> functionDeclaration(FD).
+declarationList --> declaration, [ ; ], declarationList.
+declarationList --> declaration.
+declaration -->  dataType, identifier.
+declaration --> functionDeclaration.
 dataType --> [int] ; [float] ; [str] ; [bool] ; [list] ; [dict].
-identifier(t_id(I)) -->  [I], {atom(I)}.
-integer(t_int(D)) --> [D], {integer(D)}.
-float(t_float(F)) --> [F], {float(F)}.
+identifier -->  [X], {atom(X)}.
+integer --> [X], {integer(X)}.
+float --> [X], {float(X)}.
 bool --> [true] ; [false].
 
 %------------------------------------------------ Strings -------------------------------------------
-string(t_string(I, S)) --> [“], identifier(I), string(S), [“] ; [].
+string--> [“], identifier, string, [“].
+string--> [ ].
 
 %--------------------------------------------- Functions --------------------------------------------
-functionDeclaration(t_functionDecl(I, PL, CL, E)) --> [def],  returnType, identifier(I), [ '(' ], parameterList(PL), [ ')' ], [ '{' ], commandList(CL), [ ; ], [return], expression(E), [ ; ], [ '}' ].
+functionDeclaration --> [def],  returnType, identifier, [ '(' ], parameterList, [ ')' ], [ '{' ], commandList, [ ; ], [return], expression, [ ; ], [ '}' ].
 returnType --> dataType ; [void].
-parameterList(t_parList(PS, P)) --> parameters(PS), parameter(P) ; [ ].
-parameters(t_parameters(P, PS)) --> parameter(P), parameters(PS) ; [ ].
-parameter(t_parameter(I)) --> dataType, identifier(I).
+parameterList --> parameters, parameter ; [ ].
+parameters --> parameter, parameters ; [ ].
+parameter --> dataType, identifier.
 
 %--------------------------------------------- Command Section  -------------------------------------
-commandList(t_commandList(C, CL)) --> command(C),  [ ; ],  commandList(CL).
-commandList(t_commandList(C))  --> command(C).
-command(t_command(I,E)) -->  identifier(I), [=], expression(E).
-command(t_command(I,L)) --> identifier(I),  [=],  list(L).
-command(t_command(I,D)) --> identifier(I), [=], dictionary(D).
-command(t_command(B,CL1, CL2)) --> [if], boolean(B),  [ '{' ], commandList(CL1), [ '}' ], [else], ['{'], commandList(CL2), [ '}' ].
-command(t_command(B,CL)) --> [while], boolean(B), [ '{' ], commandList(CL), [ '}' ].
-command(t_command(I,E,B,IN,K)) --> [for], [ '(' ], identifier(I), [=], expression(E), [ ; ], boolean(B), [ ; ], increment(IN), [ ')' ], [ '{' ], block(K), [ '}' ].
-command(t_command(I,D1,D2,K)) --> [for], identifier(I), [in], [range],  [ '(' ], integer(D1),  [ ',' ], integer(D2),  [ ')' ], [ '{' ], block(K), [ '}' ].
-command(t_command(I,E,B,DEC,K)) --> [for], [ '(' ], identifier(I), [=], expression(E), [ ; ], boolean(B), [ ; ], decrement(DEC), [ ')' ], [ '{' ], block(K), [ '}' ].
-command(t_command(K)) --> block(K).
-command(t_command(FC)) --> funCall(FC).
-command(t_command(I,FC)) --> identifier(I), [=], funCall(FC).
-command(t_command(PS)) --> printStatement(PS).
-command(t_command(B,E1,E2)) --> boolean(B), [ ?],  expression(E1), [ : ], expression(E2).
+commandList --> command,  [ ; ],  commandList.
+commandList  --> command.
+command -->  identifier, [=], expression.
+command --> identifier,  [=],  list.
+command --> identifier, [=], dictionary.
+command --> [if], boolean,  [ '{' ], commandList, [ '}' ], [else], ['{'], commandList, [ '}' ].
+command --> [while], boolean, [ '{' ], commandList, [ '}' ].
+command --> [for], [ '(' ], identifier, [=], expression, [ ; ], boolean, [ ; ], increment, [ ')' ], [ '{' ], block, [ '}' ].
+command --> [for], identifier, [in], [range],  [ '(' ], integer,  [ ',' ], integer,  [ ')' ], [ '{' ], block, [ '}' ].
+command --> [for], [ '(' ], identifier, [=], expression, [ ; ], [boolean], [ ; ], decrement, [ ')' ], [ '{' ], block, [ '}' ].
+command --> block.
+command --> funCall.
+command --> identifier, [=], funCall.
+command --> printStatement.
+command --> boolean, [ ?],  expression, [ : ], expression.
 
 %--------------------------------------------- Expression Section  -------------------------------------
-expression(t_expression(E, T)) --> expression(E), [+], term(T).
-expression(t_expression(E, T)) --> expression(E), [-], term(T).
-expression(t_expression(T)) --> term(T).
-term(t_term(T,V)) -->  term(T), [*], value(V).
-term(t_term(T,V)) --> term(T), [/], value(V).
-term(t_term(T,V)) --> term(T), ['%'], value(V).
-term(t_term(V)) --> value(V).
-value(t_value(E)) -->  ['('], expression(E), [')'].
-value(t_value(I)) --> identifier(I).
-value(t_value(D)) --> integer(D).
-value(t_value(F)) --> float(F).
-value(t_value(NOP)) --> numberOps(NOP).
-value(t_value(SOP)) --> stringOps(SOP).
-value(t_value(LID)) --> listIdentifier(LID).
-value(t_value(DID)) --> dictionaryIdentifier(DID).
-value(t_value(S)) --> string(S).
+expression --> expression, [+], term.
+expression --> expression, [-], term.
+expression --> term.
+term -->  term, [*], value.
+term --> term, [/], value.
+term --> term, ['%'], value.
+term --> value.
+value -->  ['('], expression, [')'].
+value --> identifier.
+value --> integer.
+value --> float.
+value --> numberOps.
+value --> stringOps.
+value --> listIdentifier.
+value --> dictionaryIdentifier.
+value --> string.
 
 %--------------------------------------------- List Section  ---------------------------------------------------
-list(t_list(IL)) --> [ '[' ], identifierList(IL), [ ']' ].
-identifierList(t_idList(LV,ELE)) --> listValues(LV), element(ELE) ; [ ].
-listValues(t_listVal(ELE, LV)) --> element(ELE), listValues(LV) ; [ ].
-element(t_element(D))  --> integer(D).
-element(t_element(F))  --> float(F).
-element(t_element(S))  --> string(S).
-listIdentifier(t_listID(I, D)) --> identifier(I), [ '[' ], integer(D), [ ']' ].
+list --> [ '[' ], identifierList, [ ']' ].
+identifierList --> listValues, element ; [ ].
+listValues --> element, listValues ; [ ].
+element --> integer ; float ; string.
+listIdentifier --> identifier, [ '[' ], integer, [ ']' ].
 
 %--------------------------------------------- Dictionary Section  --------------------------------------------
-dictionary(t_dictionary(DI)) --> ['{'], dictionaryItems(DI), ['}'].
-dictionaryItems(t_dictItems(DV, DE)) --> dictionaryValues(DV), dictionaryElement(DE) ; [ ].
-dictionaryValues(t_dictValues(DE, DV)) --> dictionaryElement(DE), dictionaryValues(DV) ;[ ].
-dictionaryElement(t_dictElement(S, DV)) --> string(S), [:], dictionaryValue(DV).
-dictionaryValue(t_dictVal(I)) --> integer(I).
-dictionaryValue(t_dictVal(F)) --> float(F).
-dictionaryValue(t_dictVal(S)) --> string(S).
-dictionaryIdentifier(t_dictID(I, S)) --> identifier(I), ['['], string(S), [']'].
+dictionary --> ['{'], dictionaryItems, ['}'].
+dictionaryItems --> dictionaryValues, dictionaryElement ; [ ].
+dictionaryValues --> dictionaryElement, dictionaryValues ;[ ].
+dictionaryElement --> string, [:], dictionaryValue.
+dictionaryValue --> integer ; float ; string.
+dictionaryIdentifier --> identifier, ['['], string, [']'].
 
 %--------------------------------------------- Operations Section  -------------------------------------
-numberOps(t_numberOps(TC)) --> typeCast(TC).
-numberOps(t_numberOps(INC)) --> increment(INC).
-numberOps(t_numberOps(DEC)) --> decrement(DEC).
-increment(t_inc(I)) --> identifier(I), [+], [+].
-decrement(t_dec(I)) --> identifier(I), [-], [-].
-typeCast(t_typeCast(I)) --> ['('], castDataType, [')'], identifier(I).
+numberOps --> typeCast ; increment ;decrement.
+increment --> identifier, [+], [+].
+decrement --> identifier, [-], [-].
+typeCast --> ['('], castDataType, [')'], identifier.
 castDataType --> [int] ; [float] ; [str].
-
-stringOps(t_stringOps(CST)) -->  concatString(CST).
-stringOps(t_stringOps(RST)) -->  revString(RST). 
-stringOps(t_stringOps(SST)) -->  splitString(SST). 
-stringOps(t_stringOps(SLEN)) -->  stringLength(SLEN). 
-
-concatString(t_concatStr(S1, S2)) --> [concat], ['('], string(S1) , string(S2), [')'].
-concatString(t_concatStr(I1, I2)) --> [concat], ['('], identifier(I1), identifier(I2), [')'].
-revString(t_revStr(S)) --> [rev], ['('], string(S), [')'].
-splitString(t_splitStr(S, D)) --> [split], ['('], string(S), integer(D).
-stringLength(t_strLen(S)) --> [len], ['('], string(S), [')'].
+stringOps -->  concatString ; revString ; splitString ; stringLength.
+concatString --> [concat], ['('], string , string, [')'].
+concatString --> [concat], ['('], identifier, identifier, [')'].
+revString --> [rev], ['('], string, [')'].
+splitString --> [split], ['('], string, integer.
+stringLength --> [len], ['('], string, [')'].
 
 %-------------------------------------- Conditional and Loop Section  -------------------------------------
-boolean(t_boolean()) --> bool.
-boolean(t_boolean(E1, E2)) --> expression(E1), [and], expression(E2).
-boolean(t_boolean(E1, E2)) --> expression(E1), [or], expression(E2).
-boolean(t_boolean(E1, E2)) --> expression(E1), [==], expression(E2).
-boolean(t_boolean(E1, E2)) --> expression(E1), [<], expression(E2).
-boolean(t_boolean(E1, E2)) --> expression(E1), [>], expression(E2).
-boolean(t_boolean(E1, E2)) --> expression(E1), [<=], expression(E2).
-boolean(t_boolean(E1, E2)) --> expression(E1), [>=], expression(E2).
-boolean(t_boolean(E1, E2)) --> expression(E1), ['!='], expression(E2).
-boolean(t_boolean(B)) --> [not], boolean(B).
+boolean --> bool.
+boolean --> expression, [and], expression.
+boolean --> expression, [or], expression.
+boolean --> expression, [==], expression.
+boolean --> [not], boolean.
+boolean --> expression, [<], expression.
+boolean --> expression, [>], expression.
+boolean --> expression, [<=], expression.
+boolean --> expression, [>=], expression.
+boolean --> expression, ['!='], expression.
 
 %--------------------------------------------- Function Call  --------------------------------------------
-funCall(t_funCall(I, CPL)) --> identifier(I), ['('], callParameterList(CPL), [')'].
-callParameterList(t_callParList(CPS, CP)) --> callParameters(CPS), callParameter(CP) ; [ ].
-callParameters(t_callPars(CP, CPS)) --> callParameter(CP), callParameters(CPS) ; [ ].
-callParameter(t_callPar(I)) --> identifier(I).
+funCall --> identifier, ['('], callParameterList, [')'].
+callParameterList --> callParameters, callParameter ; [ ].
+callParameters --> callParameter, callParameters ; [ ].
+callParameter --> identifier.
 
 %--------------------------------------------- Print Statement  --------------------------------------------
-printStatement(t_print(IT)) --> [print], ['('], item(IT), [')'].
-item(t_item(E)) --> expression(E). 
-item(t_item(S)) --> string(S).
+printStatement --> [print], ['('], item, [')'].
+item --> expression; string.
