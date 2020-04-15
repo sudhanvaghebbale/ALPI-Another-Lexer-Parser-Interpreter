@@ -29,37 +29,37 @@ parameter(t_parameter(I)) --> dataType, identifier(I).
 %--------------------------------------------- Command Section  -------------------------------------
 commandList(t_commandList(C, CL)) --> command(C),  [ ; ],  commandList(CL).
 commandList(t_commandList(C))  --> command(C).
-command(t_command(I,E)) -->  identifier(I), [=], expression(E).
-command(t_command(I,L)) --> identifier(I),  [=],  list(L).
-command(t_command(I,D)) --> identifier(I), [=], dictionary(D).
-command(t_command(B,CL1, CL2)) --> [if], boolean(B),  [ '{' ], commandList(CL1), [ '}' ], [else], ['{'], commandList(CL2), [ '}' ].
-command(t_command(B,CL)) --> [while], boolean(B), [ '{' ], commandList(CL), [ '}' ].
-command(t_command(I,E,B,IN,K)) --> [for], [ '(' ], identifier(I), [=], expression(E), [ ; ], boolean(B), [ ; ], increment(IN), [ ')' ], [ '{' ], block(K), [ '}' ].
-command(t_command(I,D1,D2,K)) --> [for], identifier(I), [in], [range],  [ '(' ], integer(D1),  [ ',' ], integer(D2),  [ ')' ], [ '{' ], block(K), [ '}' ].
-command(t_command(I,E,B,DEC,K)) --> [for], [ '(' ], identifier(I), [=], expression(E), [ ; ], boolean(B), [ ; ], decrement(DEC), [ ')' ], [ '{' ], block(K), [ '}' ].
-command(t_command(K)) --> block(K).
-command(t_command(FC)) --> funCall(FC).
-command(t_command(I,FC)) --> identifier(I), [=], funCall(FC).
-command(t_command(PS)) --> printStatement(PS).
-command(t_command(B,E1,E2)) --> boolean(B), [ ?],  expression(E1), [ : ], expression(E2).
+command(t_command_assignexpr(I,E)) -->  identifier(I), [=], expression(E).
+command(t_command_assignlist(I,L)) --> identifier(I),  [=],  list(L).
+command(t_command_assigndict(I,D)) --> identifier(I), [=], dictionary(D).
+command(t_command_if(B,CL1, CL2)) --> [if], boolean(B),  [ '{' ], commandList(CL1), [ '}' ], [else], ['{'], commandList(CL2), [ '}' ].
+command(t_command_boolean(B,CL)) --> [while], boolean(B), [ '{' ], commandList(CL), [ '}' ].
+command(t_command_for1(I,E,B,IN,K)) --> [for], [ '(' ], identifier(I), [=], expression(E), [ ; ], boolean(B), [ ; ], increment(IN), [ ')' ], [ '{' ], block(K), [ '}' ].
+command(t_command_for2(I,D1,D2,K)) --> [for], identifier(I), [in], [range],  [ '(' ], integer(D1),  [ ',' ], integer(D2),  [ ')' ], [ '{' ], block(K), [ '}' ].
+command(t_command_for3(I,E,B,DEC,K)) --> [for], [ '(' ], identifier(I), [=], expression(E), [ ; ], boolean(B), [ ; ], decrement(DEC), [ ')' ], [ '{' ], block(K), [ '}' ].
+command(t_command_block(K)) --> block(K).
+command(t_command_fun(FC)) --> funCall(FC).
+command(t_command_funreturn(I,FC)) --> identifier(I), [=], funCall(FC).
+command(t_command_print(PS)) --> printStatement(PS).
+command(t_command_ternary(B,E1,E2)) --> boolean(B), [ ?],  expression(E1), [ : ], expression(E2).
 
 %--------------------------------------------- Expression Section  -------------------------------------
-expression(t_expression(E, T)) --> expression(E), [+], term(T).
-expression(t_expression(E, T)) --> expression(E), [-], term(T).
-expression(t_expression(T)) --> term(T).
-term(t_term(T,V)) -->  term(T), [*], value(V).
-term(t_term(T,V)) --> term(T), [/], value(V).
-term(t_term(T,V)) --> term(T), ['%'], value(V).
-term(t_term(V)) --> value(V).
-value(t_value(E)) -->  ['('], expression(E), [')'].
-value(t_value(I)) --> identifier(I).
-value(t_value(D)) --> integer(D).
-value(t_value(F)) --> float(F).
-value(t_value(NOP)) --> numberOps(NOP).
-value(t_value(SOP)) --> stringOps(SOP).
-value(t_value(LID)) --> listIdentifier(LID).
-value(t_value(DID)) --> dictionaryIdentifier(DID).
-value(t_value(S)) --> string(S).
+expression(t_expression_add(E, T)) --> expression(E), [+], term(T).
+expression(t_expression_sub(E, T)) --> expression(E), [-], term(T).
+expression(t_expression_term(T)) --> term(T).
+term(t_term_mul(T,V)) -->  term(T), [*], value(V).
+term(t_term_div(T,V)) --> term(T), [/], value(V).
+term(t_term_mod(T,V)) --> term(T), ['%'], value(V).
+term(t_term_value(V)) --> value(V).
+value(t_value_expr(E)) -->  ['('], expression(E), [')'].
+value(t_value_id(I)) --> identifier(I).
+value(t_value_int(D)) --> integer(D).
+value(t_value_float(F)) --> float(F).
+value(t_value_numberOps(NOP)) --> numberOps(NOP).
+value(t_value_stringOps(SOP)) --> stringOps(SOP).
+value(t_value_list(LID)) --> listIdentifier(LID).
+value(t_value_dict(DID)) --> dictionaryIdentifier(DID).
+value(t_value_string(S)) --> string(S).
 
 %--------------------------------------------- List Section  ---------------------------------------------------
 list(t_list(IL)) --> [ '[' ], identifierList(IL), [ ']' ].
@@ -102,15 +102,15 @@ stringLength(t_strLen(S)) --> [len], ['('], string(S), [')'].
 
 %-------------------------------------- Conditional and Loop Section  -------------------------------------
 boolean(t_boolean()) --> bool.
-boolean(t_boolean(E1, E2)) --> expression(E1), [and], expression(E2).
-boolean(t_boolean(E1, E2)) --> expression(E1), [or], expression(E2).
-boolean(t_boolean(E1, E2)) --> expression(E1), [==], expression(E2).
-boolean(t_boolean(E1, E2)) --> expression(E1), [<], expression(E2).
-boolean(t_boolean(E1, E2)) --> expression(E1), [>], expression(E2).
-boolean(t_boolean(E1, E2)) --> expression(E1), [<=], expression(E2).
-boolean(t_boolean(E1, E2)) --> expression(E1), [>=], expression(E2).
-boolean(t_boolean(E1, E2)) --> expression(E1), ['!='], expression(E2).
-boolean(t_boolean(B)) --> [not], boolean(B).
+boolean(t_boolean_and(E1, E2)) --> expression(E1), [and], expression(E2).
+boolean(t_boolean_or(E1, E2)) --> expression(E1), [or], expression(E2).
+boolean(t_boolean_eq(E1, E2)) --> expression(E1), [==], expression(E2).
+boolean(t_boolean_lt(E1, E2)) --> expression(E1), [<], expression(E2).
+boolean(t_boolean_gt(E1, E2)) --> expression(E1), [>], expression(E2).
+boolean(t_boolean_lteq(E1, E2)) --> expression(E1), [<=], expression(E2).
+boolean(t_boolean_gteq(E1, E2)) --> expression(E1), [>=], expression(E2).
+boolean(t_boolean_neq(E1, E2)) --> expression(E1), ['!='], expression(E2).
+boolean(t_boolean_not(B)) --> [not], boolean(B).
 
 %--------------------------------------------- Function Call  --------------------------------------------
 funCall(t_funCall(I, CPL)) --> identifier(I), ['('], callParameterList(CPL), [')'].
