@@ -11,13 +11,19 @@ declarationList(t_decList(D)) --> declaration(D).
 declaration(t_declaration(I)) -->  dataType, identifier(I).
 declaration(t_declaration(FD)) --> functionDeclaration(FD).
 dataType --> [int] ; [float] ; [str] ; [bool] ; [list] ; [dict].
-identifier(t_id(I)) -->  [I], {atom(I)}.
-integer(t_int(D)) --> [D], {integer(D)}.
-float(t_float(F)) --> [F], {float(F)}.
+% Created different types of identifiers. Because list and dictionary
+% can appear on LHS as well.
+identifier(t_varID(I)) --> varIdentifier(I).
+identifier(t_listID(L)) --> listIdentifier(L).
+identifier(t_dictionaryID(D)) --> dictionaryIdentifier(D).
+varIdentifier(I) -->  [I], {atom(I)}.
+integer(D) --> [D], {integer(D)}.
+float(F) --> [F], {float(F)}.
 bool --> [true] ; [false].
 
 %------------------------------------------------ Strings -------------------------------------------
-string(t_string(I, S)) --> [“], identifier(I), string(S), [“] ; [].
+%Added inverted commas for the quotes
+string(t_string(I,S)) --> ['"'], [I], string(S), ['"'], {atom(I)} ; [].
 
 %--------------------------------------------- Functions --------------------------------------------
 functionDeclaration(t_functionDecl(I, PL, CL, E)) --> [def],  returnType, identifier(I), [ '(' ], parameterList(PL), [ ')' ], [ '{' ], commandList(CL), [ ; ], [return], expression(E), [ ; ], [ '}' ].
@@ -63,8 +69,11 @@ value(t_value_string(S)) --> string(S).
 
 %--------------------------------------------- List Section  ---------------------------------------------------
 list(t_list(IL)) --> [ '[' ], identifierList(IL), [ ']' ].
-identifierList(t_idList(LV,ELE)) --> listValues(LV), element(ELE) ; [ ].
-listValues(t_listVal(ELE, LV)) --> element(ELE), listValues(LV) ; [ ].
+identifierList(t_idList(LV,ELE)) --> listValues(LV), element(ELE).
+identifierList(t_idList()) --> [].
+%Comma was missing, added it.
+listValues(t_listVal(ELE, LV)) --> element(ELE), [,], listValues(LV).
+listValues(t_listVal()) --> [].
 element(t_element(D))  --> integer(D).
 element(t_element(F))  --> float(F).
 element(t_element(S))  --> string(S).
