@@ -1,0 +1,8 @@
+//To update the value of an item in the list
+?- listIdentifier(L,[lst,'[',2,']'],[]), eval_listIdentifier_LHS(L,69,[(lst,[1,2,3,4,5])],FEnv).
+
+//To initialize the list 
+?- list(L,['[',5,,,6,,,7.56,']'],[]), eval_list(L,lst,[],FEnv).
+
+//To fetch the value of an item in the list
+?- listIdentifier(L,[lst,'[',2,']'],[]), eval_listIdentifier_RHS(L,[(lst,[1,2,3,4,5])],Val).
