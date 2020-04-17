@@ -7,3 +7,5 @@ Markup : - [ ] To make the lexer.py take filenames as arguments from shell to co
            [ ] Execute Multiple files at once?
 
   
+ Markup : - [ ] An uncompleted task
+          - [x] A completed task
