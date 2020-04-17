@@ -1,5 +1,9 @@
 from nltk.tokenize import word_tokenize
 
+# Need the below lines if running for the first time
+
+import nltk
+nltk.download('punkt')
 
 class Lexer():
     def __init__(self,FileName):
