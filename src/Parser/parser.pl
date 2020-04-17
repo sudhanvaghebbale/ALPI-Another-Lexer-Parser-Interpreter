@@ -48,7 +48,6 @@ command(t_command_fun(FC)) --> funCall(FC).
 command(t_command_funreturn(I,FC)) --> identifier(I), [=], funCall(FC).
 command(t_command_print(PS)) --> printStatement(PS).
 command(t_command_ternary(B,E1,E2)) --> boolean(B), [ ?],  expression(E1), [ : ], expression(E2).
-
 %--------------------------------------------- Expression Section  -------------------------------------
 expression(t_expression_add(E, T)) --> expression(E), [+], term(T).
 expression(t_expression_sub(E, T)) --> expression(E), [-], term(T).
@@ -71,13 +70,13 @@ value(t_value_string(S)) --> string(S).
 list(t_list(IL)) --> [ '[' ], identifierList(IL), [ ']' ].
 identifierList(t_idList(LV,ELE)) --> listValues(LV), element(ELE).
 identifierList(t_idList()) --> [].
-%Comma was missing, added it.
+%Added comma between elements
 listValues(t_listVal(ELE, LV)) --> element(ELE), [,], listValues(LV).
 listValues(t_listVal()) --> [].
 element(t_element(D))  --> integer(D).
 element(t_element(F))  --> float(F).
 element(t_element(S))  --> string(S).
-listIdentifier(t_listID(I, D)) --> identifier(I), [ '[' ], integer(D), [ ']' ].
+listIdentifier(t_listID(I, D)) --> varIdentifier(I), [ '[' ], integer(D), [ ']' ].
 
 %--------------------------------------------- Dictionary Section  --------------------------------------------
 dictionary(t_dictionary(DI)) --> ['{'], dictionaryItems(DI), ['}'].
@@ -99,9 +98,9 @@ typeCast(t_typeCast(I)) --> ['('], castDataType, [')'], identifier(I).
 castDataType --> [int] ; [float] ; [str].
 
 stringOps(t_stringOps(CST)) -->  concatString(CST).
-stringOps(t_stringOps(RST)) -->  revString(RST). 
-stringOps(t_stringOps(SST)) -->  splitString(SST). 
-stringOps(t_stringOps(SLEN)) -->  stringLength(SLEN). 
+stringOps(t_stringOps(RST)) -->  revString(RST).
+stringOps(t_stringOps(SST)) -->  splitString(SST).
+stringOps(t_stringOps(SLEN)) -->  stringLength(SLEN).
 
 concatString(t_concatStr(S1, S2)) --> [concat], ['('], string(S1) , string(S2), [')'].
 concatString(t_concatStr(I1, I2)) --> [concat], ['('], identifier(I1), identifier(I2), [')'].
@@ -124,10 +123,46 @@ boolean(t_boolean_not(B)) --> [not], boolean(B).
 %--------------------------------------------- Function Call  --------------------------------------------
 funCall(t_funCall(I, CPL)) --> identifier(I), ['('], callParameterList(CPL), [')'].
 callParameterList(t_callParList(CPS, CP)) --> callParameters(CPS), callParameter(CP) ; [ ].
-callParameters(t_callPars(CP, CPS)) --> callParameter(CP), callParameters(CPS) ; [ ].
+%Added comma between parameters.
+callParameters(t_callPars(CP, CPS)) --> callParameter(CP), [,], callParameters(CPS) ; [ ].
 callParameter(t_callPar(I)) --> identifier(I).
 
 %--------------------------------------------- Print Statement  --------------------------------------------
 printStatement(t_print(IT)) --> [print], ['('], item(IT), [')'].
-item(t_item(E)) --> expression(E). 
+item(t_item(E)) --> expression(E).
 item(t_item(S)) --> string(S).
+
+
+% ---------------------------------------------Semantics ----------------
+
+%----------------------------------------------Lists Section------------
+eval_list(t_list(X),ID,Env,Env1):- eval_identifierList(X,ID,Env,Env1).
+eval_identifierList(t_idList(LV,ELE),ID,Env,Env2):- eval_listValues(LV,ID,Env,Env1), eval_element(ELE,ID,Env1,Env2).
+eval_listValues(t_listVal(ELE,LV),ID,Env,Env2):- eval_element(ELE,ID,Env,Env1), eval_listValues(LV,ID,Env1,Env2).
+eval_listValues(t_listVal(),_,Env,Env).
+eval_element(t_element(X),ID,Env,Env1):- initializeList(ID,X,Env,Env1).
+
+eval_listIdentifier_LHS(t_listID(ID,Pos),Val,Env,Env1):- updateList(ID,Pos,Val,Env,Env1).
+eval_listIdentifier_RHS(t_listID(ID,Pos),Env,Val):- lookupList(ID,Pos,Env,Val).
+
+
+%Initializes the list
+initializeList(ID,X,[],[(ID,[X])]).
+initializeList(ID,X,[(ID,T)|TL],[(ID,L)|TL]):- append(T,[X],L).
+initializeList(ID,X,[H|T],[H|Env]):- H \= (ID,_), initializeList(ID,X,T,Env).
+
+%Finds the list identifier in the environment
+lookupList(ID,Pos,[(ID,T)|_],Val):- lookupList(T,Pos,Val).
+lookupList(ID,Pos,[H|T],Val):- H \= (ID,_), lookupList(ID,Pos,T,Val).
+
+%Finds the item within the list
+lookupList([_|T],Pos,Val):- Pos \= 0, Pos1 is Pos - 1, lookupList(T,Pos1,Val).
+lookupList([H|_],0,H).
+
+%Finds the list identifier in the environment
+updateList(ID,Pos,Val,[(ID,T)|TL],[(ID,L)|TL]):- updateList(T,Pos,Val,L).
+updateList(ID,Pos,Val,[H|T],[H|L]):-  H \= (ID,_), updateList(ID,Pos,Val,T,L).
+
+%Updates the element within the list
+updateList([H|T],Pos,Val,[H|L]):- Pos \= 0, Pos1 is Pos - 1, updateList(T,Pos1,Val,L).
+updateList([_|T],0,Val,[Val|T]).
