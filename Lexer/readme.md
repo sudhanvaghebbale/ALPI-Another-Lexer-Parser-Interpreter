@@ -2,6 +2,7 @@
 
 
 ### TODO:
+- [ ] Lexer should be able to handle syntax errors.
 - [ ] To make the lexer.py take filenames as arguments from shell to compile tokens on-the-go. 
 - [ ] Execute Multiple files at once?
 
