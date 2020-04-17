@@ -1,4 +1,4 @@
-#### To generate tokens, save code in script.txt and run lexer.py the stream of tokens should be generated in tokens.txt
+###To generate tokens, save code in script.txt and run lexer.py the stream of tokens should be generated in tokens.txt
 
 
 ### TODO:
