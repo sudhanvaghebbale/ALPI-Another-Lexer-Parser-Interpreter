@@ -2,9 +2,8 @@
 
 
 ### TODO:
-
-Markup : - [ ] To make the lexer.py take filenames as arguments from shell to compile tokens on-the-go. 
-           [ ] Execute Multiple files at once?
+- [ ] To make the lexer.py take filenames as arguments from shell to compile tokens on-the-go. 
+  [ ] Execute Multiple files at once?
 
   
  Markup : - [ ] An uncompleted task
