@@ -1,0 +1,222 @@
+% Tables are used to tackle left recursion
+:- table expr/3, term/3, value/3.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%% Program Section %%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+program(t_program(K)) --> [begin], beginningBlock(K), [end].
+
+eval_program(t_program(K), Env, FinalEnv) :- eval_block(K, Env, FinalEnv).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%% Block Section %%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+beginningBlock(t_beginning_block(DL, CL)) --> declarationList(DL), [;],  commandList(CL), [;].
+block(t_block(DL, CL)) --> ['{'], declarationList(DL), [;],  commandList(CL), [;], [ '}' ].
+
+eval_block(t_beginning_block(D, C), Env, NewEnv) :- 
+    eval_declarationList(D, Env, Env1), eval_commandList(C, Env1, NewEnv).
+
+eval_block(t_block(D, C), Env, NewEnv) :- 
+    eval_declarationList(D, Env, Env1), eval_commandList(C, Env1, NewEnv).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%% Declaration Grammar %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+declarationList(t_declarationList(D, DL)) --> declaration(D), [ ; ], declarationList(DL).
+declarationList(t_declarationList(D)) --> declaration(D).
+
+declaration(t_declaration(I)) -->  dataType, value(I).
+
+declaration(t_init(I, N)) --> [num], value(I), [=], value(N).
+declaration(t_init_string(I, S)) --> [str], value(I), [=], string(S).
+declaration(t_init_bool(I, B)) --> [bool], value(I), [=], boolean(B).
+
+dataType --> [num] ; [str] ; [bool] ; [list] ; [dict].
+
+string(t_string(S)) --> ['"'], stringTerm(S), ['"'].
+string(t_string(S)) --> ['\''], stringTerm(S), ['\''].
+stringTerm(t_stringTerm(S)) --> [S], {atom(S)}.
+stringTerm(t_stringTerm()) --> [].
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%% Declaration Evaluation %%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+eval_declarationList(t_declarationList(C, CL), Env, NewEnv) :- 
+    eval_declaration(C, Env, Env1), eval_declarationList(CL, Env1, NewEnv).
+
+% declarationList(t_decList(D)) --> declaration(D).
+eval_declarationList(t_declarationList(C), Env, NewEnv) :- eval_declaration(C, Env, NewEnv).
+
+% declaration(t_declaration(I)) -->  dataType, identifier(I).
+eval_declaration(t_declaration(I), Env, NewEnv) :-
+    eval_id(I, Id), lookup(Id, Env, Val), update(Id, Val, Env, NewEnv).
+
+% If value not in lookup table, put a garbage value.
+eval_declaration(t_declaration(I), Env, NewEnv) :-
+    eval_id(I, Id), not(lookup(Id, Env, _)), update(Id, _, Env, NewEnv).
+
+% declaration(t_init(I, _)) --> identifier(I), [=], integer/float/String.
+eval_declaration(t_init(I,D), Env, NewEnv) :-
+    eval_id(I, Id), eval_expression(D, Env, Env1, Val1), update(Id, Val1, Env1, NewEnv).
+
+% bool(t_bool(true)) --> [true].
+eval_declaration(t_init_bool(I, V), Env, NewEnv) :-
+	eval_id(I, Id), eval_boolean(V, Env, Env, true), update(Id, true, Env, NewEnv).
+
+% bool(t_bool(false)) --> [false].
+eval_declaration(t_init_bool(I, V), Env, NewEnv) :-
+	eval_id(I, Id), eval_boolean(V, Env, Env, false), update(Id, false, Env, NewEnv).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%% Command Grammar %%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+commandList(t_commandList(C, CL)) --> command(C),  [ ; ],  commandList(CL).
+commandList(t_commandList(C))  --> command(C).
+
+command(t_command_assign(I,E)) -->  value(I), [=], expression(E).
+command(t_command_ifte(B,CL1,CL2)) --> [if], boolean(B),  [ '{' ], commandList(CL1), [;], [ '}' ], 
+    [else], ['{'], commandList(CL2), [ '}' ].
+command(t_command_while(B,CL)) --> [while], boolean(B), [ '{' ], commandList(CL), [;], [ '}' ].
+command(t_command_block(K)) --> block(K).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%% Command Evaluation %%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+eval_commandList(t_commandList(C, CL), Env, NewEnv) :- 
+    eval_command(C, Env, Env1), eval_commandList(CL, Env1, NewEnv).
+
+eval_commandList(t_commandList(C), Env, NewEnv) :- eval_command(C, Env, NewEnv).
+
+% command(t_command_assignexpr(I,E)) -->  identifier(I), [=], expression(E).
+eval_command(t_command_assign(I, E), Env, NewEnv) :- 
+    eval_id(I, Id), eval_expression(E, Env, Env1, Val1), update(Id, Val1, Env1, NewEnv).
+
+% Execute commandList if boolean is true
+eval_command(t_command_ifte(B, C1, _C2), Env, NewEnv) :- 
+    eval_boolean(B, Env, Env, true), eval_commandList(C1, Env, NewEnv).
+
+% Execute commandList if boolean is false
+eval_command(t_command_ifte(B, _C1, C2), Env, NewEnv) :- 
+    eval_boolean(B, Env, Env, false), eval_commandList(C2, Env, NewEnv).
+
+% Execute commandList until the boolean is true
+eval_command(t_command_while(B, C), Env, NewEnv) :- 
+    eval_boolean(B, Env, Env, true), eval_commandList(C, Env, Env1), 
+    eval_command(t_command_while(B, C), Env1, NewEnv).
+
+% Return new environment if the boolean is false
+eval_command(t_command_while(B, _C), Env, Env) :- eval_boolean(B, Env, Env, false).
+
+eval_command(t_command_block(K), Env, NewEnv) :- eval_block(K, Env, NewEnv).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%% Boolean Grammar %%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+boolean(t_boolean(true)) --> [true].
+boolean(t_boolean(false)) --> [false].
+boolean(t_boolean_equal(E1, E2)) --> expression(E1), [==], expression(E2).
+boolean(t_boolean_not(B)) --> [not], boolean(B).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%% Boolean Evaluation %%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+eval_boolean(true, Env, Env, true).
+eval_boolean(false, Env, Env, false).
+eval_boolean(t_boolean_equal(E1, E2), Env, NewEnv, Val) :- 
+    eval_expression(E1, Env, Env1, Val1), eval_expression(E2, Env1, NewEnv, Val2), 
+    equal(Val1, Val2, Val).
+eval_boolean(t_boolean_not(B), Env, NewEnv, Val) :- 
+    eval_boolean(B, Env, NewEnv, Value), not(Value, Val).
+
+% Not predicate to reverse the value of the expression
+not(true, false).
+not(false, true).
+
+% To check if the two expressions are the same
+equal(Val1, Val2, true) :- Val1 = Val2.
+equal(Val1, Val2, false) :- Val1 \= Val2.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%% Expression Grammar %%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Assign has the least precedence
+expression(t_command_assign(I, E)) --> value(I), [=], expression(E).
+expression(X) --> expr(X).
+
+% Expression to add and subtract
+expr(t_add(X,Y)) --> expr(X), [+], term(Y).
+expr(t_subr(X,Y)) --> expr(X), [-], term(Y).
+expr(X) --> term(X).
+
+% Multiply and Divide. Precedence is given to this over addition and subtraction
+term(t_mult(X,Y)) --> term(X), [*], value(Y).
+term(t_div(X,Y)) --> term(X), [/], value(Y).
+term(t_div(X,Y)) --> term(X), ['%'], value(Y).
+term(X) --> value(X).
+
+% To tackle brackets -> Highest Priority
+value(t_brackets(X)) --> ['('], expression(X), [')'].
+
+% To set the identifier or number from the treenode
+value(t_num(X)) --> [X], {number(X)}.
+value(t_id(I)) --> [I], {atom(I)}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%% Expression Evaluation %%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Update the new value into the lookup table
+eval_expression(t_command_assign(I, E), Env, NewEnv, Val1) :- 
+    eval_id(I, Id), eval_expression(E, Env, Env1, Val1), update(Id, Val1, Env1, NewEnv).
+
+% E -> E + E
+eval_expression(t_add(X,Y), Env, NewEnv, Val) :- 
+    eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2), 
+    Val is Val1 + Val2.
+
+% E -> E - E 
+eval_expression(t_subr(X,Y), Env, NewEnv, Val) :- 
+    eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2), 
+    Val is Val1 - Val2.
+                
+% E -> E * E
+eval_expression(t_mult(X,Y), Env, NewEnv, Val) :- 
+    eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2), 
+    Val is Val1 * Val2.
+
+% E -> E / E
+eval_expression(t_div(X,Y), Env, NewEnv, Val) :- 
+    eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2), 
+    Val is Val1 / Val2.       
+
+% E -> (E)
+eval_expression(t_brackets(X), Env, NewEnv, Val) :- eval_expression(X, Env, NewEnv, Val).
+
+% Get the value of identifier from the lookup table
+eval_expression(t_id(I), Env,  Env, Val) :- lookup(I, Env, Val).
+
+% Return the value to the same environment
+eval_expression(t_num(X), Env, Env, X).
+
+% To extract id from the tree node
+eval_id(t_id(I), I).
+    
+% To find the value of the variable in the particular environment.
+lookup(Id, [(Id, Val) | _], Val).
+lookup(Id, [_ | T], Val) :- lookup(Id, T, Val).
+
+% To update values in the environment
+update(Id, Val, [], [(Id, Val)]).
+update(Id, Val, [(Id, _) | T], [(Id, Val) | T]).
+update(Id, Val, [H | T], [H | R]) :- 
+    H \= (Id, _), update(Id, Val, T, R).
