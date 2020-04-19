@@ -66,6 +66,9 @@ eval_declaration(t_declaration(I), Env, NewEnv) :-
 eval_declaration(t_init(I,D), Env, NewEnv) :-
     eval_id(I, Id), eval_expression(D, Env, Env1, Val1), update(Id, Val1, Env1, NewEnv).
 
+eval_declaration(t_init_string(I, S), Env, NewEnv) :- 
+    eval_id(I, Id), eval_expression(S, Env, Env, Val), update(Id, Val, Env, NewEnv).
+
 % bool(t_bool(true)) --> [true].
 eval_declaration(t_init_bool(I, V), Env, NewEnv) :-
 	eval_id(I, Id), eval_boolean(V, Env, Env, true), update(Id, true, Env, NewEnv).
@@ -325,9 +328,15 @@ eval_expression(t_id(I), Env,  Env, Val) :- lookup(I, Env, Val).
 % Return the value to the same environment
 eval_expression(t_num(X), Env, Env, X).
 
+%  Return the string to the same environment
+eval_expression(t_string(S), Env, Env, Val) :- eval_string(S, Env, Env, Val).
+
 % To extract id from the tree node
 eval_id(t_id(I), I).
-    
+
+% To extract string from the tree node
+eval_string(t_stringTerm(S), Env, Env, S).
+
 % To find the value of the variable in the particular environment.
 lookup(Id, [(Id, Val) | _], Val).
 lookup(Id, [_ | T], Val) :- lookup(Id, T, Val).
