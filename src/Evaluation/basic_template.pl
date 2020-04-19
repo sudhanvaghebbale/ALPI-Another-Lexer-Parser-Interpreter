@@ -101,6 +101,7 @@ command(t_command_for_inc(I,E,B,IN,CL)) --> [for], [ '(' ], value(I), [=],
 command(t_command_for_dec(I,E,B,DEC,CL)) --> [for], [ '(' ], value(I), [=], 
     expression(E), [ ; ], boolean(B), [ ; ], decrement(DEC), [ ')' ], [ '{' ], 
     commandList(CL), [ '}' ].
+
 command(t_command_for_range(I,D1,D2,CL)) --> [for], value(I), [in], [range],  ['('], 
     value(D1),  [','], value(D2),  [')'], ['{'], commandList(CL), ['}'].
 
@@ -156,6 +157,10 @@ eval_command(t_command_for_dec(I,E,B,DE,CL), Env, NewEnv) :-
     eval_command(t_command_assign(I, E), Env, Env1), 
     eval_forLoop_dec(t_for(B, DE, CL), Env1, NewEnv).
 
+eval_command(t_command_for_range(I, D1, D2, CL), Env, NewEnv) :- 
+    eval_command(t_command_assign(I, D1), Env, Env1), 
+    eval_forLoop_range(t_for_range(I, D1, D2, CL), Env1, NewEnv).
+    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%% Boolean Grammar %%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -394,3 +399,11 @@ eval_forLoop_dec(t_for(B, _DE, _C), Env, Env) :- eval_boolean(B, Env, Env, false
 
 eval_decrement(t_decrement(IN), Env, NewEnv) :- eval_id(IN, Id), lookup(Id, Env, Val), 
     Val1 is Val - 1, update(Id, Val1, Env, NewEnv).
+
+eval_forLoop_range(t_for_range(I, D1, D2, CL), Env, NewEnv) :- 
+    eval_boolean(t_boolean_lt(I, D2), Env, Env1, true),
+    eval_commandList(CL, Env1, Env2), eval_id(I, Id), lookup(Id, Env2, Val), Val1 is Val + 1, 
+    update(Id, Val1, Env2, Env3), eval_forLoop_range(t_for_range(I, D1, D2, CL), Env3, NewEnv).
+
+eval_forLoop_range(t_for_range(I, _D1, D2, _CL), Env, Env) :- 
+    eval_boolean(t_boolean_lt(I, D2), Env, Env, false).
