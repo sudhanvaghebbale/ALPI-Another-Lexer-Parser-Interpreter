@@ -6,7 +6,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 program(t_program(K)) --> [begin], beginningBlock(K), [end].
-
 eval_program(t_program(K), Env, FinalEnv) :- eval_block(K, Env, FinalEnv).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -30,6 +29,7 @@ declarationList(t_declarationList(D, DL)) --> declaration(D), [ ; ], declaration
 declarationList(t_declarationList(D)) --> declaration(D).
 
 declaration(t_declaration(I)) -->  dataType, value(I).
+declaration(t_funcDeclaration(FD)) --> functionDeclaration(FD).
 
 declaration(t_init(I, N)) --> [num], value(I), [=], value(N).
 declaration(t_init_string(I, S)) --> [str], value(I), [=], string(S).
@@ -56,6 +56,8 @@ eval_declarationList(t_declarationList(C), Env, NewEnv) :- eval_declaration(C, E
 eval_declaration(t_declaration(I), Env, NewEnv) :-
     eval_id(I, Id), lookup(Id, Env, Val), update(Id, Val, Env, NewEnv).
 
+eval_declaration(t_funcDeclaration(FD), Env, NewEnv) :- eval_functionDeclaration(FD, Env, NewEnv).
+
 % If value not in lookup table, put a garbage value.
 eval_declaration(t_declaration(I), Env, NewEnv) :-
     eval_id(I, Id), not(lookup(Id, Env, _)), update(Id, _, Env, NewEnv).
@@ -80,10 +82,24 @@ commandList(t_commandList(C, CL)) --> command(C),  [ ; ],  commandList(CL).
 commandList(t_commandList(C))  --> command(C).
 
 command(t_command_assign(I,E)) -->  value(I), [=], expression(E).
-command(t_command_ifte(B,CL1,CL2)) --> [if], boolean(B),  [ '{' ], commandList(CL1), [;], [ '}' ], 
-    [else], ['{'], commandList(CL2), [ '}' ].
-command(t_command_while(B,CL)) --> [while], boolean(B), [ '{' ], commandList(CL), [;], [ '}' ].
+command(t_command_ifte(B,CL1,CL2)) --> [if], ['('], boolean(B), [')'], [ '{' ], 
+    commandList(CL1), [;], [ '}' ], [else], ['{'], commandList(CL2), [;], [ '}' ].
+command(t_command_while(B,CL)) --> [while], ['('], boolean(B), [')'], [ '{' ], 
+    commandList(CL), [;], [ '}' ].
 command(t_command_block(K)) --> block(K).
+
+command(t_command_func(FC)) --> funCall(FC).
+command(t_command_funcReturn(I,FC)) --> value(I), [=], funCall(FC).
+command(t_command_print(PS)) --> printStatement(PS).
+
+/*
+command(t_command_ternary(B,E1,E2)) --> boolean(B), [ ?],  expression(E1), [ : ], expression(E2).
+command(t_command_assignlist(I,L)) --> identifier(I),  [=],  list(L).
+command(t_command_assigndict(I,D)) --> identifier(I), [=], dictionary(D).
+command(t_command_for1(I,E,B,IN,K)) --> [for], [ '(' ], identifier(I), [=], expression(E), [ ; ], boolean(B), [ ; ], increment(IN), [ ')' ], [ '{' ], block(K), [ '}' ].
+command(t_command_for2(I,D1,D2,K)) --> [for], identifier(I), [in], [range],  [ '(' ], integer(D1),  [ ',' ], integer(D2),  [ ')' ], [ '{' ], block(K), [ '}' ].
+command(t_command_for3(I,E,B,DEC,K)) --> [for], [ '(' ], identifier(I), [=], expression(E), [ ; ], boolean(B), [ ; ], decrement(DEC), [ ')' ], [ '{' ], block(K), [ '}' ].
+*/
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% Command Evaluation %%%%%%%%%%%%%%%%%%%%%%
@@ -96,7 +112,7 @@ eval_commandList(t_commandList(C), Env, NewEnv) :- eval_command(C, Env, NewEnv).
 
 % command(t_command_assignexpr(I,E)) -->  identifier(I), [=], expression(E).
 eval_command(t_command_assign(I, E), Env, NewEnv) :- 
-    eval_id(I, Id), eval_expression(E, Env, Env1, Val1), update(Id, Val1, Env1, NewEnv).
+    eval_id(I, Id), eval_expression(E, Env, Env1, Val), update(Id, Val, Env1, NewEnv).
 
 % Execute commandList if boolean is true
 eval_command(t_command_ifte(B, C1, _C2), Env, NewEnv) :- 
@@ -116,6 +132,7 @@ eval_command(t_command_while(B, _C), Env, Env) :- eval_boolean(B, Env, Env, fals
 
 eval_command(t_command_block(K), Env, NewEnv) :- eval_block(K, Env, NewEnv).
 
+eval_command(t_command_func(FC), Env, NewEnv) :- eval_funCall(FC, Env, NewEnv). 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%% Boolean Grammar %%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -161,7 +178,7 @@ expr(X) --> term(X).
 % Multiply and Divide. Precedence is given to this over addition and subtraction
 term(t_mult(X,Y)) --> term(X), [*], value(Y).
 term(t_div(X,Y)) --> term(X), [/], value(Y).
-term(t_div(X,Y)) --> term(X), ['%'], value(Y).
+term(t_mod(X,Y)) --> term(X), ['%'], value(Y).
 term(X) --> value(X).
 
 % To tackle brackets -> Highest Priority
@@ -170,6 +187,8 @@ value(t_brackets(X)) --> ['('], expression(X), [')'].
 % To set the identifier or number from the treenode
 value(t_num(X)) --> [X], {number(X)}.
 value(t_id(I)) --> [I], {atom(I)}.
+% value(t_listID(L)) --> listIdentifier(L).
+% value(t_dictionaryID(D)) --> dictionaryIdentifier(D).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% Expression Evaluation %%%%%%%%%%%%%%%%%%%%%%
@@ -220,3 +239,36 @@ update(Id, Val, [], [(Id, Val)]).
 update(Id, Val, [(Id, _) | T], [(Id, Val) | T]).
 update(Id, Val, [H | T], [H | R]) :- 
     H \= (Id, _), update(Id, Val, T, R).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%% Function Declaration %%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+functionDeclaration(t_funcDeclr(I, PL, CL, E)) --> [func], value(I), ['('], 
+    parameterList(PL), [')'], ['{'], commandList(CL), [;], 
+    [return], expression(E), [;], ['}'].
+parameterList(t_parList(P, PL)) --> parameter(P), [','], parameterList(PL).
+parameterList(t_parList(P)) --> parameter(P).
+parameter(t_parameter(I)) --> value(I).
+
+funCall(t_funCall(I, CPL)) --> value(I), ['('], callParameterList(CPL), [')'].
+callParameterList(t_callParList(CP, CPS)) --> 
+    callParameter(CP), [','], callParameterList(CPS).
+callParameterList(t_callParList(CP)) --> callParameter(CP).
+callParameter(t_callPar(I)) --> value(I).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%% Function Evaluation %%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+eval_functionDeclaration(t_funcDeclr(I, _PL, CL, _E), Env, NewEnv) :- 
+    eval_id(I, Id), update(Id, CL, Env, NewEnv).
+
+eval_funCall(t_funCall(I, _CPL), Env, NewEnv) :- eval_id(I, Id), lookup(Id, Env, Val),
+    eval_commandList(Val, Env, NewEnv).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%% Print Statement %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+printStatement(t_print(IT)) --> [print], ['('], value(IT), [')'].
