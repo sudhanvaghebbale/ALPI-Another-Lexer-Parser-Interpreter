@@ -166,3 +166,24 @@ updateList(ID,Pos,Val,[H|T],[H|L]):-  H \= (ID,_), updateList(ID,Pos,Val,T,L).
 %Updates the element within the list
 updateList([H|T],Pos,Val,[H|L]):- Pos \= 0, Pos1 is Pos - 1, updateList(T,Pos1,Val,L).
 updateList([_|T],0,Val,[Val|T]).
+
+
+%--------------------------------------String Section ----------------------------
+
+
+%Reverse String
+reverseString(String, Ans) :- string_chars(String, List), rev(List, TempAns, []), string_chars(Ans, TempAns).
+rev([],Z,Z).
+rev([H|T],Z,Acc) :- rev(T,Z,[H|Acc]).
+
+
+%Concat String
+concatString(String1, String2, Ans) :- string_concat(String1, String2, String3).
+
+
+%Split String
+splitString(String, SepChar, PadChars, Substrings) :- split_string(String, SepChars, PadChars, SubStrings).
+
+
+%String Length
+stringLength(String, Ans) :- string_length(String, Ans).
