@@ -23,8 +23,11 @@ bool --> [true] ; [false].
 
 %------------------------------------------------ Strings -------------------------------------------
 %Added inverted commas for the quotes
-string(t_string(I,S)) --> ['"'], [I], string(S), ['"'], {atom(I)} ; [].
-
+%string(t_string(I,S)) --> ['"'], [I], string(S), ['"'], {atom(I)} ; [].
+string(t_string(S)) --> ['"'], stringTerm(S), ['"'].
+%string(t_string(S)) --> ['\''], stringTerm(S), ['\''].
+stringTerm(S) --> [S], {atom(S)}.
+stringTerm(null) --> [].
 %--------------------------------------------- Functions --------------------------------------------
 functionDeclaration(t_functionDecl(I, PL, CL, E)) --> [def],  returnType, identifier(I), [ '(' ], parameterList(PL), [ ')' ], [ '{' ], commandList(CL), [ ; ], [return], expression(E), [ ; ], [ '}' ].
 returnType --> dataType ; [void].
@@ -36,8 +39,10 @@ parameter(t_parameter(I)) --> dataType, identifier(I).
 commandList(t_commandList(C, CL)) --> command(C),  [ ; ],  commandList(CL).
 commandList(t_commandList(C))  --> command(C).
 command(t_command_assignexpr(I,E)) -->  identifier(I), [=], expression(E).
-command(t_command_assignlist(I,L)) --> identifier(I),  [=],  list(L).
-command(t_command_assigndict(I,D)) --> identifier(I), [=], dictionary(D).
+%Allow list and dictionary to be initialized only in declaration.
+%command(t_command_assignlist(I,L)) --> identifier(I),  [=],  list(L).
+%command(t_command_assigndict(I,D)) --> identifier(I), [=],dictionary(D).
+command(t_command_assignID(ID1,ID2)) --> identifier(ID1), [=], identifier(ID2).
 command(t_command_if(B,CL1, CL2)) --> [if], boolean(B),  [ '{' ], commandList(CL1), [ '}' ], [else], ['{'], commandList(CL2), [ '}' ].
 command(t_command_boolean(B,CL)) --> [while], boolean(B), [ '{' ], commandList(CL), [ '}' ].
 command(t_command_for1(I,E,B,IN,K)) --> [for], [ '(' ], identifier(I), [=], expression(E), [ ; ], boolean(B), [ ; ], increment(IN), [ ')' ], [ '{' ], block(K), [ '}' ].
@@ -57,13 +62,10 @@ term(t_term_div(T,V)) --> term(T), [/], value(V).
 term(t_term_mod(T,V)) --> term(T), ['%'], value(V).
 term(t_term_value(V)) --> value(V).
 value(t_value_expr(E)) -->  ['('], expression(E), [')'].
-value(t_value_id(I)) --> identifier(I).
 value(t_value_int(D)) --> integer(D).
 value(t_value_float(F)) --> float(F).
 value(t_value_numberOps(NOP)) --> numberOps(NOP).
 value(t_value_stringOps(SOP)) --> stringOps(SOP).
-value(t_value_list(LID)) --> listIdentifier(LID).
-value(t_value_dict(DID)) --> dictionaryIdentifier(DID).
 value(t_value_string(S)) --> string(S).
 
 %--------------------------------------------- List Section  ---------------------------------------------------
@@ -80,13 +82,15 @@ listIdentifier(t_listID(I, D)) --> varIdentifier(I), [ '[' ], integer(D), [ ']' 
 
 %--------------------------------------------- Dictionary Section  --------------------------------------------
 dictionary(t_dictionary(DI)) --> ['{'], dictionaryItems(DI), ['}'].
-dictionaryItems(t_dictItems(DV, DE)) --> dictionaryValues(DV), dictionaryElement(DE) ; [ ].
-dictionaryValues(t_dictValues(DE, DV)) --> dictionaryElement(DE), dictionaryValues(DV) ;[ ].
+dictionaryItems(t_dictItems(DV, DE)) --> dictionaryValues(DV), dictionaryElement(DE).
+dictionaryItems(t_dictItems()) --> [].
+dictionaryValues(t_dictValues(DE, DV)) --> dictionaryElement(DE), [,], dictionaryValues(DV).
+dictionaryValues(t_dictValues()) --> [].
 dictionaryElement(t_dictElement(S, DV)) --> string(S), [:], dictionaryValue(DV).
 dictionaryValue(t_dictVal(I)) --> integer(I).
 dictionaryValue(t_dictVal(F)) --> float(F).
-dictionaryValue(t_dictVal(S)) --> string(S).
-dictionaryIdentifier(t_dictID(I, S)) --> identifier(I), ['['], string(S), [']'].
+dictionaryValue(t_dictVal_string(S)) --> string(S).
+dictionaryIdentifier(t_dictID(I,S)) --> varIdentifier(I), ['['], string(S), [']'].
 
 %--------------------------------------------- Operations Section  -------------------------------------
 numberOps(t_numberOps(TC)) --> typeCast(TC).
@@ -108,7 +112,7 @@ revString(t_revStr(S)) --> [rev], ['('], string(S), [')'].
 splitString(t_splitStr(S, D)) --> [split], ['('], string(S), integer(D).
 stringLength(t_strLen(S)) --> [len], ['('], string(S), [')'].
 
-%-------------------------------------- Conditional and Loop Section  -------------------------------------
+%-------------------------------------- Conditional and Loop Section -------------------------------------
 boolean(t_boolean()) --> bool.
 boolean(t_boolean_and(E1, E2)) --> expression(E1), [and], expression(E2).
 boolean(t_boolean_or(E1, E2)) --> expression(E1), [or], expression(E2).
@@ -138,6 +142,7 @@ item(t_item(S)) --> string(S).
 %----------------------------------------------Lists Section------------
 eval_list(t_list(X),ID,Env,Env1):- eval_identifierList(X,ID,Env,Env1).
 eval_identifierList(t_idList(LV,ELE),ID,Env,Env2):- eval_listValues(LV,ID,Env,Env1), eval_element(ELE,ID,Env1,Env2).
+eval_identifierList(t_idList(),_,Env,Env).
 eval_listValues(t_listVal(ELE,LV),ID,Env,Env2):- eval_element(ELE,ID,Env,Env1), eval_listValues(LV,ID,Env1,Env2).
 eval_listValues(t_listVal(),_,Env,Env).
 eval_element(t_element(X),ID,Env,Env1):- initializeList(ID,X,Env,Env1).
@@ -167,6 +172,41 @@ updateList(ID,Pos,Val,[H|T],[H|L]):-  H \= (ID,_), updateList(ID,Pos,Val,T,L).
 updateList([H|T],Pos,Val,[H|L]):- Pos \= 0, Pos1 is Pos - 1, updateList(T,Pos1,Val,L).
 updateList([_|T],0,Val,[Val|T]).
 
+% --------------------------------------Dictionary Section----------------------------
+eval_dictionaryIdentifier_LHS(t_dictID(ID,Key),Val,Env,Env1):- eval_string(Key,Key1), updateDict(ID,Key1,Val,Env,Env1).
+eval_dictionaryIdentifier_RHS(t_dictID(ID,Key),Env,Val):- eval_string(Key,Key1), lookupDict(ID,Key1,Env,Val).
+
+
+eval_dictionary(t_dictionary(DI),ID,Env,Env1):- eval_dictionaryItems(DI,ID,Env,Env1).
+eval_dictionaryItems(t_dictItems(DV,DE),ID,Env,Env2):- eval_dictionaryValues(DV,ID,Env,Env1), eval_dictionaryElement(DE,ID,Env1,Env2).
+eval_dictionaryItems(t_dictItems(),_,Env,Env).
+eval_dictionaryValues(t_dictValues(DE,DV),ID,Env,Env2):- eval_dictionaryElement(DE,ID,Env,Env1), eval_dictionaryValues(DV,ID,Env1,Env2).
+eval_dictionaryValues(t_dictValues(),_,Env,Env).
+eval_dictionaryElement(t_dictElement(S,DV),ID,Env,Env1):- eval_string(S,Key), eval_dictionaryValue(DV,Value), initializeDict(ID,Key,Value,Env,Env1).
+eval_dictionaryValue(t_dictVal(D),D).
+eval_dictionaryValue(t_dictVal_string(S),Value):- eval_string(S,Value).
+eval_string(t_string(S),S).
+
+initializeDict(ID,Key,Value,[],[(ID,[(Key,Value)])]).
+initializeDict(ID,Key,Value,[(ID,T)|TL],[(ID,L)|TL]):- append(T,[(Key,Value)],L).
+initializeDict(ID,Key,Value,[H|T],[H|Env]):- H \= (ID,_), initializeDict(ID,Key,Value,T,Env).
+
+%Finds the dictionary identifier in the environment
+lookupDict(ID,Key,[(ID,T)|_],Val):- lookupDict(T,Key,Val).
+lookupDict(ID,Key,[H|T],Val):- H \= (ID,_), lookupDict(ID,Key,T,Val).
+
+%Finds the item within the list
+lookupDict([(Key,Val)|_],Key,Val).
+lookupDict([H|T],Key,Val):- H \= (Key,_), lookupDict(T,Key,Val).
+
+%Finds the list identifier in the environment
+updateDict(ID,Key,Value,[(ID,T)|TL],[(ID,L)|TL]):- updateDict(T,Key,Value,L).
+updateDict(ID,Key,Value,[H|T],[H|Env]):-  H \= (ID,_), updateDict(ID,Key,Value,T,Env).
+
+%Updates the element within the list
+updateDict([(Key,_)|T],Key,Value,[(Key,Value)|T]).
+updateDict([H|T],Key,Value,[H|L]):- H \= (Key,_), updateDict(T,Key,Value,L).
+
 
 %--------------------------------------String Section ----------------------------
 
@@ -178,11 +218,13 @@ rev([H|T],Z,Acc) :- rev(T,Z,[H|Acc]).
 
 
 %Concat String
-concatString(String1, String2, Ans) :- string_concat(String1, String2, String3).
+% concatString(String1, String2, Ans) :- string_concat(String1, String2,
+% String3).
 
 
 %Split String
-splitString(String, SepChar, PadChars, Substrings) :- split_string(String, SepChars, PadChars, SubStrings).
+% splitString(String, SepChar, PadChars, Substrings) :-
+% split_string(String, SepChars, PadChars, SubStrings).
 
 
 %String Length

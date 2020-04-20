@@ -6,3 +6,9 @@
 
 //To fetch the value of an item in the list
 ?- listIdentifier(L,[lst,'[',2,']'],[]), eval_listIdentifier_RHS(L,[(lst,[1,2,3,4,5])],Val).
+
+?- dictionary(L,['{','"',key1,'"',:,'"',value1,'"',,,'"',key2,'"',:,'"',value2,'"','}'],[]), eval_dictionary(L,dct,[],FEnv).
+
+?- dictionaryIdentifier(L,[dct,'[','"',key2,'"',']'],[]), eval_dictionaryIdentifier_RHS(L,[(dct,[(key1,value1),(key2,value2)])],Val).
+
+?- dictionaryIdentifier(L,[dct,'[','"',key2,'"',']'],[]), eval_dictionaryIdentifier_LHS(L,newvalue2,[(dct,[(key1,value1),(key2,value2)])],Val).
