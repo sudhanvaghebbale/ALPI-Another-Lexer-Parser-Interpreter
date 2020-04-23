@@ -210,7 +210,7 @@ updateDict([H|T],Key,Value,[H|L]):- H \= (Key,_), updateDict(T,Key,Value,L).
 
 %--------------------------------------String Section ----------------------------
 
-
+/*
 %Reverse String
 reverseString(String, Ans) :- string_chars(String, List), rev(List, TempAns, []), string_chars(Ans, TempAns).
 rev([],Z,Z).
@@ -228,4 +228,22 @@ rev([H|T],Z,Acc) :- rev(T,Z,[H|Acc]).
 
 
 %String Length
-stringLength(String, Ans) :- string_length(String, Ans).
+stringLength(String, Ans) :- string_length(String, Ans).*/
+
+
+%Reverse String
+eval_revStr(t_revStr(String), Ans) :- string_chars(String, List), rev(List, TempAns, []), string_chars(Ans, TempAns).
+rev([], Z, Z).
+rev([H|T],Z,Acc) :- rev(T,Z,[H|Acc]).
+
+
+%Concat String
+eval_concatString(t_concatStr(String1, String2), Ans) :- string_concat(String1, String2, Ans).
+
+
+%Split String
+%splitString(String, SepChar, PadChars, Substrings) :- split_string(String, SepChars, PadChars, SubStrings).
+
+
+%String Length
+stringLength(t_strLen(String), Ans) :- string_length(String, Ans).
