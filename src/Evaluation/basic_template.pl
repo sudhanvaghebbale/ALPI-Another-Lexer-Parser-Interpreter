@@ -344,6 +344,8 @@ value(t_brackets(X)) --> ['('], expression(X), [')'].
 
 % To set the identifier or number from the treenode
 value(t_num(X)) --> number(X).
+value(t_id(X)) --> identifier(X).
+value(t_expr_string(X)) --> string(X).
 % value(t_id(I)) --> [I], {atom(I)}.
 % value(t_listID(L)) --> listIdentifier(L).
 % value(t_dictionaryID(D)) --> dictionaryIdentifier(D).
@@ -383,6 +385,9 @@ eval_expression(t_brackets(X), Env, NewEnv, Val) :- eval_expression(X, Env, NewE
 % Return the value to the same environment
 eval_expression(t_num(X), Env, Env, X).
 
+eval_expression(t_id(X),Env,Env,Val):- eval_identifier_RHS(X,Env,Val).
+
+eval_expression(t_expr_string(X),Env,Env,Val):- eval_string(X,Val).
 % To extract id from the tree node
 % Moved to identifier section
 % eval_id(t_id(I), I).
