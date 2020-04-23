@@ -6,7 +6,8 @@ begin
     */
 
     //single Line comment
-
+    a++;
+    a *2;
 
     num r; num u = 0;
     num z; num v;
@@ -31,3 +32,5 @@ begin
 
     x < 3 ? r = 0 : r = 1 ;
 end 
+
+

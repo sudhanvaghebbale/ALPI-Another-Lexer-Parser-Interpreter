@@ -1,5 +1,5 @@
 main :-
-    open('myFile.txt', read, Str),
+    open('tokens.txt', read, Str),
     read_file(Str,Lines),
     close(Str),
     write(Lines), nl.
