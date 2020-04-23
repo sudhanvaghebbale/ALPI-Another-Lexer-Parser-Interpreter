@@ -12,3 +12,10 @@
 ?- dictionaryIdentifier(L,[dct,'[','"',key2,'"',']'],[]), eval_dictionaryIdentifier_RHS(L,[(dct,[(key1,value1),(key2,value2)])],Val).
 
 ?- dictionaryIdentifier(L,[dct,'[','"',key2,'"',']'],[]), eval_dictionaryIdentifier_LHS(L,newvalue2,[(dct,[(key1,value1),(key2,value2)])],Val).
+
+
+//Programs
+?-  program(P,[begin,num,x,=,5,;,dict,dct,=,'{','"',key1,'"',:,'"',value1,'"',,,'"',key2,'"',:,'"',value2,'"','}',;,x,=,7,;,end],[]), eval_program(P,[],FEnv)
+
+?-  program(P,[begin,num,x,=,5,;,dict,dct,=,'{','"',key1,'"',:,'"',value1,'"',,,'"',key2,'"',:,'"',value2,'"','}',;,list,lst,=,'[',5,,,6,,,7.56,']',;,lst,'[',2,']',=,69,;,dct,'[','"',key2,'"',']',=,lst,'[',2,']',;,x,=,7,;,end],[]), eval_program(P,[],FEnv)
+
