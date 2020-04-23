@@ -26,10 +26,10 @@ eval_block(t_block(D, C), Env, NewEnv) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 identifier(t_varID(I)) --> varIdentifier(I).
-identifier(t_listID(L)) --> listIdentifier(L).
-identifier(t_dictionaryID(D)) --> dictionaryIdentifier(D).
-listIdentifier(t_listID(I, D)) --> varIdentifier(I), [ '[' ], number(D), [ ']' ].
-dictionaryIdentifier(t_dictID(I,S)) --> varIdentifier(I), ['['], string(S), [']'].
+%identifier(t_listIdentifier(L)) --> listIdentifier(L).
+%identifier(t_dictionaryIdentifier(D)) --> dictionaryIdentifier(D).
+identifier(t_listID(I, D)) --> varIdentifier(I), [ '[' ], number(D), [ ']' ].
+identifier(t_dictID(I,S)) --> varIdentifier(I), ['['], string(S), [']'].
 varIdentifier(I) -->  [I], {atom(I)}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -137,7 +137,7 @@ command(t_command_while(B,CL)) --> [while], ['('], boolean(B), [')'], ['{'],
 command(t_command_block(K)) --> block(K).
 
 command(t_command_func(FC)) --> funCall(FC).
-command(t_command_funcReturn(I,FC)) --> value(I), [=], funCall(FC).
+command(t_command_funcReturn(I,FC)) --> identifier(I), [=], funCall(FC).
 
 command(t_command_print(PS)) --> printStatement(PS).
 command(t_command_ternary(B,E1,E2)) -->
@@ -325,7 +325,7 @@ greater_eq(Val1, Val2, false) :- Val1 < Val2.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Assign has the least precedence
-expression(t_assign(I, E)) --> (I), [=], expression(E).
+expression(t_expr_assign(I, E)) --> identifier(I), [=], expression(E).
 expression(X) --> expr(X).
 
 % Expression to add and subtract
@@ -483,7 +483,6 @@ listValues(t_listVal(ELE, LV)) --> element(ELE), [,], listValues(LV).
 listValues(t_listVal()) --> [].
 element(t_element_expr(E))  --> expression(E).
 element(t_element_string(S))  --> string(S).
-listIdentifier(t_listID(I, D)) --> varIdentifier(I), [ '[' ], number(D), [ ']' ].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% Lists Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
@@ -531,7 +530,6 @@ dictionaryValues(t_dictValues()) --> [].
 dictionaryElement(t_dictElement(S, DV)) --> string(S), [:], dictionaryValue(DV).
 dictionaryValue(t_dictVal_expr(E)) --> expression(E).
 dictionaryValue(t_dictVal_string(S)) --> string(S).
-dictionaryIdentifier(t_dictID(I,S)) --> varIdentifier(I), ['['], string(S), [']'].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% Dictionary Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
@@ -545,8 +543,6 @@ eval_dictionaryValues(t_dictValues(),_,Env,Env).
 eval_dictionaryElement(t_dictElement(S,DV),ID,Env,Env1):- eval_string(S,Key), eval_dictionaryValue(DV,Value), initializeDict(ID,Key,Value,Env,Env1).
 eval_dictionaryValue(t_dictVal_expr(E),Val):- eval_expression(E,_,_,Val).
 eval_dictionaryValue(t_dictVal_string(S),Value):- eval_string(S,Value).
-eval_string(t_string(S),Str):- eval_stringTerm(S,Str).
-eval_stringTerm(t_stringTerm(S),S).
 
 initializeDict(ID,Key,Value,[],[(ID,[(Key,Value)])]).
 initializeDict(ID,Key,Value,[(ID,T)|TL],[(ID,L)|TL]):- append(T,[(Key,Value)],L).
