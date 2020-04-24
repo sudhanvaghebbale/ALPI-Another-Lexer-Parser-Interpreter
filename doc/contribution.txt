@@ -37,13 +37,28 @@ The following file contains the contribution of each member for Milestone 1:
     - Created GitHub repo and directory structure
 
 
-Plan for the coming weeks:
+Contribution after Milestone 1:
     - Week 1:
-        - Evaluation rules for the grammar in Assignment 3 and extras (Sudhanva)
-        - Building a lexer using Python NLTK (Ankit)
-        - Start building parser for new rules in Prolog (Harmish and Jubanjan)
-    
+        1. Ankit Vutukuri
+            - Grammar and Evaluation for Lists
+        2. Harmish Ganatra
+            - Strings Grammar and Evaluation
+        3. Jubanjan Dhar
+            - Buld the lexer using NLTK to tokenize the program
+        4. Sudhanva Hebbale
+            - Basic Grammar and Evaluation for all the required parts
+            - For Loop, print Statement and Functions.
+
     - Week 2:
-        - Build evaluation rules for the generated parse tree (Sudhanva, Harmish, Jubanjan)
-        - Integrate Lexer and Parser (Ankit)
-        - Test evaluation rule for a variety of test cases (All)
+        1. Ankit Vutukuri
+            - Grammar and Evaluation for Dictionary
+            - Integrate Lists and Dictionary to 
+        2. Harmish Ganatra
+            - Strings Operations Grammar and Evaluation
+        3. Jubanjan Dhar
+            - Fix lexer problems
+            - Build a batch script pipeline to execute programs
+        4. Sudhanva Hebbale
+            - Functions Evaluation
+            - Fix Functions to allow declarations
+            - For Loop and print Statement.
