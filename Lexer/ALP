@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+
+python lexer.py
+
+echo "Done with Lexical Analysis!"
+
+swipl tokens.pl
+
+
+
+

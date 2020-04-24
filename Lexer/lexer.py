@@ -1,3 +1,5 @@
+#!/opt/anaconda3/envs/prolog/bin/python
+
 from nltk.tokenize import word_tokenize
 import re
 import sys
