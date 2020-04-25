@@ -134,12 +134,12 @@ command(t_command_ifte(B,CL1,CL2)) --> [if], ['('], boolean(B), [')'], ['{'],
     commandList(CL1), [;], [ '}' ], [else], ['{'], commandList(CL2), ['}'].
 command(t_command_while(B,CL)) --> [while], ['('], boolean(B), [')'], ['{'],
     commandList(CL), ['}'].
-command(t_command_block(K)) --> block(K).
+
+command(t_command_print(P)) --> [print], ['"'], printStatement(P), ['"'].
 
 command(t_command_func(FC)) --> funCall(FC).
 command(t_command_funcReturn(I,FC)) --> identifier(I), [=], funCall(FC).
 
-% command(t_command_print(PS)) --> printStatement(PS).
 command(t_command_ternary(B,E1,E2)) -->
     boolean(B), [?],  expression(E1), [:], expression(E2).
 
@@ -152,6 +152,8 @@ command(t_command_for_dec(I,E,B,DEC,CL)) --> [for], [ '(' ], value(I), [=],
 
 command(t_command_for_range(I,D1,D2,CL)) --> [for], value(I), [in], [range],  ['('],
     value(D1),  [','], value(D2),  [')'], ['{'], commandList(CL), ['}'].
+
+command(t_command_block(K)) --> block(K).
 
 /*
 command(t_command_assignlist(I,L)) --> identifier(I),  [=],  list(L).
@@ -196,6 +198,8 @@ eval_command(t_command_while(B, C), Env, NewEnv) :-
     eval_boolean(B, Env, Env, true), eval_commandList(C, Env, Env1),
     eval_command(t_command_while(B, C), Env1, NewEnv).
 
+eval_command(t_command_print(P), Env, Env) :- eval_printStatement(P, Env, Env).
+    
 % Return new environment if the boolean is false
 eval_command(t_command_while(B, _C), Env, Env) :- eval_boolean(B, Env, Env, false).
 
@@ -382,6 +386,10 @@ eval_expression(t_div(X,Y), Env, NewEnv, Val) :-
     eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2),
     Val is Val1 / Val2.
 
+eval_expression(t_mod(X,Y), Env, NewEnv, Val) :-
+    eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2),
+    Val is mod(Val1, Val2).
+
 % E -> (E)
 eval_expression(t_brackets(X), Env, NewEnv, Val) :- eval_expression(X, Env, NewEnv, Val).
 
@@ -482,10 +490,22 @@ eval_id(t_id(t_varID(X)), X).
 eval_id(t_varID(X), X).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%% Print Statement %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%% Print Grammar %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-printStatement(t_print(IT)) --> [print], ['('], value(IT), [')'].
+printStatement(t_print_var(I, PS)) --> identifier(I), [','], printStatement(PS).
+printStatement(t_print_var(I)) --> identifier(I).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%% Print Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+eval_printStatement(t_print_var(P, PS), Env, Env) :- eval_id(P, Id), 
+    write(Id), write(' = '), eval_identifier_RHS(P, Env, Val), 
+    write(Val), write(' || '), eval_printStatement(PS, Env, Env).
+
+eval_printStatement(t_print_var(P), Env, Env) :- eval_id(P, Id), 
+    write(Id), write(' = '), eval_identifier_RHS(P, Env, Val), write(Val), nl.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% For Loop Grammar %%%%%%%%%%%%%%%%%%%%%%%%
