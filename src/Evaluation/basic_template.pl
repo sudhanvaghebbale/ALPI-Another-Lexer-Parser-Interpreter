@@ -679,8 +679,3 @@ updateDict(ID,Key,Value,[H|T],[H|Env]):-  H \= (ID,_), updateDict(ID,Key,Value,T
 %Updates the element within the list
 updateDict([(Key,_)|T],Key,Value,[(Key,Value)|T]).
 updateDict([H|T],Key,Value,[H|L]):- H \= (Key,_), updateDict(T,Key,Value,L).
-
-% Append Predicate
-%func_append([],X,X).
-%func_append([X|L1],L2,[X|L3]):-
-%       func_append(L1,L2,L3).
