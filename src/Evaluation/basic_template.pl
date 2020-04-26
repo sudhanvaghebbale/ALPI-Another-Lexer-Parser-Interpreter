@@ -5,20 +5,21 @@
 %%%%%%%%%%%%%%%%%%%%%%% Program Section %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-program(t_program(K)) --> [begin], beginningBlock(K), [end].
+program(t_program(K)) --> block(K).
 eval_program(t_program(K), Env, FinalEnv) :- eval_block(K, Env, FinalEnv).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%% Block Section %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-beginningBlock(t_beginning_block(DL, CL)) --> declarationList(DL), [;],  commandList(CL), [;].
-block(t_block(DL, CL)) --> ['{'], declarationList(DL), [;],  commandList(CL), [;], [ '}' ].
+block(t_block(DL, CL)) --> [begin], declarationList(DL), commandList(CL), [end].
 
-eval_block(t_beginning_block(D, C), Env, NewEnv) :-
-    eval_declarationList(D, Env, Env1), eval_commandList(C, Env1, NewEnv).
+funcBlock(t_funcBlock(DL, CL)) --> declarationList(DL), commandList(CL).
 
 eval_block(t_block(D, C), Env, NewEnv) :-
+    eval_declarationList(D, Env, Env1), eval_commandList(C, Env1, NewEnv).
+
+eval_funcBlock(t_funcBlock(D, C), Env, NewEnv) :-
     eval_declarationList(D, Env, Env1), eval_commandList(C, Env1, NewEnv).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -36,6 +37,7 @@ varIdentifier(I) -->  [I], {atom(I)}.
 %%%%%%%%%%%%%%%%%%%% Identifier Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+eval_identifier_LHS(t_id(t_varID(Id)),Env,NewEnv,Val):- update(Id,Val,Env,NewEnv).
 eval_identifier_LHS(t_varID(Id),Env,NewEnv,Val):- update(Id,Val,Env,NewEnv).
 eval_identifier_LHS(t_listID(Id,Pos),Env,NewEnv,Val):- updateList(Id,Pos,Val,Env,NewEnv).
 eval_identifier_LHS(t_dictID(Id,Key),Env,NewEnv,Val):- eval_string(Key,Key1), updateDict(Id,Key1,Val,Env,NewEnv).
@@ -49,7 +51,7 @@ eval_identifier_RHS(t_listID(Id,S),Env,Val):- eval_string(S,Key), lookupDict(Id,
 %%%%%%%%%%%%%%%%%%%% Declaration Grammar %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-declarationList(t_declarationList(D, DL)) --> declaration(D), [;], declarationList(DL).
+declarationList(t_declarationList(D, DL)) --> declaration(D), declarationList(DL).
 declarationList(t_declarationList(D)) --> declaration(D).
 
 declaration(t_declaration(I)) -->  dataType, varIdentifier(I).
@@ -71,12 +73,47 @@ string(t_string(S)) --> ['\''], stringTerm(S), ['\''].
 stringTerm(t_stringTerm(S)) --> [S], {atom(S)}.
 stringTerm(t_stringTerm()) --> [].
 
+stringOps(t_stringOps_concat(CST)) -->  concatString(CST).
+stringOps(t_stringOps_rev(RST)) -->  revString(RST).
+stringOps(t_stringOps_split(SST)) -->  splitString(SST).
+stringOps(t_stringOps_len(SLEN)) -->  stringLength(SLEN).
+
+concatString(t_concatStr(S1, S2)) --> [concat], ['('], expression(S1) , expression(S2), [')'].
+% concatString(t_concatStr(I1, I2)) --> [concat], ['('], identifier(I1),
+% identifier(I2), [')'].
+revString(t_revStr(S)) --> [rev], ['('], expression(S), [')'].
+splitString(t_splitStr(S, D)) --> [split], ['('], expression(S), number(D), [')'].
+stringLength(t_strLen(S)) --> [len], ['('], expression(S), [')'].
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% String Evaluation %%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 eval_string(t_string(S),Str):- eval_stringTerm(S,Str).
 eval_stringTerm(t_stringTerm(S),S).
+
+eval_stringOps(t_stringOps_concat(X),Val) :- eval_concatString(X,Val).
+eval_stringOps(t_stringOps_rev(X),Val) :- eval_revStr(X,Val).
+%eval_stringOps(t_stringOps_split(X),Val) :- eval_splitString
+eval_stringOps(t_stringOps_len(X),Val) :- eval_stringLength(X,Val).
+
+eval_revStr(t_revStr(S), Ans) :- eval_expression(S,_,_,String), string_chars(String, List), rev(List, TempAns, []), string_chars(Ans, TempAns).
+rev([], Z, Z).
+rev([H|T],Z,Acc) :- rev(T,Z,[H|Acc]).
+
+
+%Concat String
+eval_concatString(t_concatStr(S1, S2), Ans) :- eval_expression(S1,_,_,String1), eval_expression(S2,_,_,String2), string_concat(String1, String2, Ans).
+
+
+%Split String
+% eval_splitString(String, SepChars, PadChars, SubStrings) :-
+% split_string(String, SepChars, PadChars, SubStrings).
+
+
+%String Length
+eval_stringLength(t_strLen(S), Ans) :- eval_expression(S,_,_,String), string_length(String, Ans).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% Declaration Evaluation %%%%%%%%%%%%%%%%%%%%%
@@ -123,35 +160,40 @@ eval_declaration(t_init_dict(Id,D), Env, NewEnv) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%% Command Grammar %%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-commandList(t_commandList(C, CL)) --> command(C),  [ ; ],  commandList(CL).
+commandList(t_commandList(C, CL)) --> command(C), commandList(CL).
 commandList(t_commandList(C))  --> command(C).
+%commandList(t_commandList()) --> [].
 
 command(t_command_assign_expr(I,E)) -->  identifier(I), [=], expression(E).
 command(t_command_assign_id(ID1,ID2)) -->  identifier(ID1), [=], identifier(ID2).
 command(t_command_assign_string(I,S)) -->  identifier(I), [=], string(S).
 command(t_command_assign_bool(I,B)) -->  identifier(I), [=], boolean(B).
 command(t_command_ifte(B,CL1,CL2)) --> [if], ['('], boolean(B), [')'], ['{'],
-    commandList(CL1), [;], [ '}' ], [else], ['{'], commandList(CL2), ['}'].
+    commandList(CL1), [ '}' ], [else], ['{'], commandList(CL2), ['}'].
 command(t_command_while(B,CL)) --> [while], ['('], boolean(B), [')'], ['{'],
     commandList(CL), ['}'].
-command(t_command_block(K)) --> block(K).
+
+command(t_command_print(P)) --> [print], ['"'], printStatement(P), ['"'].
 
 command(t_command_func(FC)) --> funCall(FC).
 command(t_command_funcReturn(I,FC)) --> identifier(I), [=], funCall(FC).
 
-command(t_command_print(PS)) --> printStatement(PS).
 command(t_command_ternary(B,E1,E2)) -->
     boolean(B), [?],  expression(E1), [:], expression(E2).
 
 command(t_command_for_inc(I,E,B,IN,CL)) --> [for], [ '(' ], value(I), [=],
-    expression(E), [ ; ], boolean(B), [ ; ],
+    expression(E), [;], boolean(B), [;],
     increment(IN), [ ')' ], [ '{' ], commandList(CL), [ '}' ].
 command(t_command_for_dec(I,E,B,DEC,CL)) --> [for], [ '(' ], value(I), [=],
-    expression(E), [ ; ], boolean(B), [ ; ], decrement(DEC), [ ')' ], [ '{' ],
+    expression(E), [;], boolean(B), [ ; ], decrement(DEC), [ ')' ], [ '{' ],
     commandList(CL), [ '}' ].
 
 command(t_command_for_range(I,D1,D2,CL)) --> [for], value(I), [in], [range],  ['('],
     value(D1),  [','], value(D2),  [')'], ['{'], commandList(CL), ['}'].
+
+command(t_command_block(K)) --> block(K).
+
+command(t_command_stringOps(I,OP)) --> identifier(I), [=], stringOps(OP).
 
 /*
 command(t_command_assignlist(I,L)) --> identifier(I),  [=],  list(L).
@@ -166,6 +208,8 @@ eval_commandList(t_commandList(C, CL), Env, NewEnv) :-
     eval_command(C, Env, Env1), eval_commandList(CL, Env1, NewEnv).
 
 eval_commandList(t_commandList(C), Env, NewEnv) :- eval_command(C, Env, NewEnv).
+
+eval_commandList(t_commandList(), Env, Env).
 
 % command(t_command_assign_expr(I,E)) --> identifier(I),[=],expression(E).
 eval_command(t_command_assign_expr(I, E), Env, NewEnv) :-
@@ -196,12 +240,17 @@ eval_command(t_command_while(B, C), Env, NewEnv) :-
     eval_boolean(B, Env, Env, true), eval_commandList(C, Env, Env1),
     eval_command(t_command_while(B, C), Env1, NewEnv).
 
+eval_command(t_command_print(P), Env, Env) :- eval_printStatement(P, Env, Env).
+
 % Return new environment if the boolean is false
 eval_command(t_command_while(B, _C), Env, Env) :- eval_boolean(B, Env, Env, false).
 
 eval_command(t_command_block(K), Env, NewEnv) :- eval_block(K, Env, NewEnv).
 
 eval_command(t_command_func(FC), Env, NewEnv) :- eval_funCall(FC, Env, NewEnv).
+
+eval_command(t_command_funcReturn(I, FC), Env, NewEnv) :- eval_id(I, Id),
+    eval_funCall(FC, Env, Env1, Val), update(Id, Val, Env1, NewEnv).
 
 eval_command(t_command_ternary(B, E1, _E2), Env, NewEnv) :-
     eval_boolean(B, Env, Env, true), eval_expression(E1, Env, NewEnv, _Val).
@@ -210,17 +259,18 @@ eval_command(t_command_ternary(B, _E1, E2), Env, NewEnv) :-
     eval_boolean(B, Env, Env, false), eval_expression(E2, Env, NewEnv, _Val).
 
 eval_command(t_command_for_inc(I,E,B,IN,CL), Env, NewEnv) :-
-    eval_command(t_command_assign(I, E), Env, Env1),
+    eval_command(t_command_assign_expr(I, E), Env, Env1),
     eval_forLoop_inc(t_for(B, IN, CL), Env1, NewEnv).
 
 eval_command(t_command_for_dec(I,E,B,DE,CL), Env, NewEnv) :-
-    eval_command(t_command_assign(I, E), Env, Env1),
+    eval_command(t_command_assign_expr(I, E), Env, Env1),
     eval_forLoop_dec(t_for(B, DE, CL), Env1, NewEnv).
 
 eval_command(t_command_for_range(I, D1, D2, CL), Env, NewEnv) :-
-    eval_command(t_command_assign(I, D1), Env, Env1),
+    eval_command(t_command_assign_expr(I, D1), Env, Env1),
     eval_forLoop_range(t_for_range(I, D1, D2, CL), Env1, NewEnv).
 
+eval_command(t_command_stringOps(I,OP),Env,NewEnv) :- eval_stringOps(OP,Val), eval_identifier_LHS(I,Env,NewEnv,Val).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%% Boolean Grammar %%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -379,6 +429,10 @@ eval_expression(t_div(X,Y), Env, NewEnv, Val) :-
     eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2),
     Val is Val1 / Val2.
 
+eval_expression(t_mod(X,Y), Env, NewEnv, Val) :-
+    eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2),
+    Val is mod(Val1, Val2).
+
 % E -> (E)
 eval_expression(t_brackets(X), Env, NewEnv, Val) :- eval_expression(X, Env, NewEnv, Val).
 
@@ -406,38 +460,95 @@ update(Id, Val, [(Id, _) | T], [(Id, Val) | T]).
 update(Id, Val, [H | T], [H | R]) :-
     H \= (Id, _), update(Id, Val, T, R).
 
+updateAppend(Id, Val, [], [(Id, Val)]).
+updateAppend(Id, Val, [(Id, Prev) | T], [(Id, Result) | T]) :- append(Prev, [Val], Result).
+updateAppend(Id, Val, [H | T], [H | R]) :-
+    H \= (Id, _), updateAppend(Id, Val, T, R).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% Function Declaration %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-functionDeclaration(t_funcDeclr(I, PL, CL, E)) --> [func], varIdentifier(I), ['('],
-    parameterList(PL), [')'], ['{'], commandList(CL), [;],
-    [return], expression(E), [;], ['}'].
-parameterList(t_parList(P, PL)) --> parameter(P), [','], parameterList(PL).
-parameterList(t_parList(P)) --> parameter(P).
-parameter(t_parameter(I)) --> value(I).
+functionDeclaration(t_funcDeclr(I, PL, DL, CL)) --> [func], identifier(I), ['('],
+    parameterList(PL), [')'], ['{'], funcBlock(t_funcBlock(DL, CL)), ['}'].
 
-funCall(t_funCall(I, CPL)) --> varIdentifier(I), ['('], callParameterList(CPL), [')'].
+functionDeclaration(t_funcDeclr(I, PL, DL, CL, E)) --> [func], identifier(I), ['('],
+    parameterList(PL), [')'], ['{'], funcBlock(t_funcBlock(DL, CL)), return(E), ['}'].
+
+parameterList(t_parList(P, PL)) --> parameter(P), [,], parameterList(PL).
+parameterList(t_parList(P)) --> parameter(P).
+parameter(I) --> identifier(I).
+
+funCall(t_funCall(I, CPL)) --> value(I), ['('], callParameterList(CPL), [')'].
 callParameterList(t_callParList(CP, CPS)) -->
-    callParameter(CP), [','], callParameterList(CPS).
+    callParameter(CP), [,], callParameterList(CPS).
 callParameterList(t_callParList(CP)) --> callParameter(CP).
-callParameter(t_callPar(I)) --> value(I).
+callParameter(I) --> value(I).
+return(t_return(E)) --> [return], expression(E).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%% Function Evaluation %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-eval_functionDeclaration(t_funcDeclr(I, _PL, CL, _E), Env, NewEnv) :-
-    update(I,Env,NewEnv,CL).
+eval_functionDeclaration(t_funcDeclr(I, PL, DL, CL), Env, NewEnv) :-
+    eval_id(I, Id), update(Id, [PL, t_funcBlock(DL, CL)], Env, NewEnv).
 
-eval_funCall(t_funCall(I, _CPL), Env, NewEnv) :-
-    lookup(I,Env,Val), eval_commandList(Val, Env, NewEnv).
+eval_functionDeclaration(t_funcDeclr(I, PL, DL, CL, E), Env, NewEnv) :-
+    eval_id(I, Id), update(Id, [PL, t_funcBlock(DL, CL), E], Env, NewEnv).
+
+eval_funCall(t_funCall(I, CPL), Env, Env) :-
+     eval_id(I, Id),  lookup(Id, Env, [P, K]),
+    eval_parameters(I, CPL, P, Env, Env1), lookup(Id, Env1, [P, K | T]), eval_funcBlock(K, T, _Env2).
+
+eval_funCall(t_funCall(I, CPL), Env, Env, Val) :- eval_id(I, Id),  lookup(Id, Env, [P, K, R]),
+    eval_parameters(I, CPL, P, Env, Env1), lookup(Id, Env1, [P, K, R | T]), eval_funcBlock(K, T, Env2),
+    eval_return(R, Env2, _Env3, Val).
+
+eval_return(t_return(E), Env, NewEnv, Val) :- eval_expression(E, Env, NewEnv, Val).
+ 
+eval_parameters(I, CPL, P, Env, NewEnv) :-
+    eval_id(I, Id), eval_callParList(CPL, Env, Env1, [], ComPar), eval_parList(P, Env1, Env2, [], Par),
+    localScope(Id, ComPar, Par, Env2, NewEnv).
+
+eval_callParList(t_callParList(P, PS), Env, Env, Val, Res) :-
+    eval_expression(P, Env, Env, Id), append(Val, Id, Result), eval_callParList(PS, Env, Env, [Result], Res).
+
+eval_callParList(t_callParList(P), Env, Env, Val, Result) :-
+    eval_expression(P, Env, Env, Id), append(Val, Id, Result).
+
+eval_parList(t_parList(P, PS), Env, Env, Val, Res) :-
+    eval_id(P, Id), append(Val, Id, Result), eval_parList(PS, Env, Env, [Result], Res).
+
+eval_parList(t_parList(P), Env, Env, Val, Result) :-
+    eval_id(P, Id), append(Val, Id, Result).
+
+localScope(_, [[]], [[]], Env, Env).
+
+localScope(Id, [H | T], [H1 | T1], Env, NewEnv) :- updateAppend(Id, (H1, H), Env, Env1),
+    localScope(Id, [T], [T1], Env1, NewEnv).
+
+localScope(Id, [H], [H1], Env, NewEnv) :- updateAppend(Id, (H1, H), Env, NewEnv).
+
+eval_id(t_id(t_varID(X)), X).
+eval_id(t_varID(X), X).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%% Print Statement %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%% Print Grammar %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-printStatement(t_print(IT)) --> [print], ['('], value(IT), [')'].
+printStatement(t_print_var(I, PS)) --> identifier(I), [','], printStatement(PS).
+printStatement(t_print_var(I)) --> identifier(I).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%% Print Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+eval_printStatement(t_print_var(P, PS), Env, Env) :- eval_id(P, Id),
+    write(Id), write(' = '), eval_identifier_RHS(P, Env, Val),
+    write(Val), write(' || '), eval_printStatement(PS, Env, Env).
+
+eval_printStatement(t_print_var(P), Env, Env) :- eval_id(P, Id),
+    write(Id), write(' = '), eval_identifier_RHS(P, Env, Val), write(Val), nl.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% For Loop Grammar %%%%%%%%%%%%%%%%%%%%%%%%
@@ -470,11 +581,11 @@ eval_decrement(t_decrement(Id), Env, NewEnv) :- lookup(Id, Env, Val),
 
 eval_forLoop_range(t_for_range(I, D1, D2, CL), Env, NewEnv) :-
     eval_boolean(t_boolean_lt(I, D2), Env, Env1, true),
-    eval_commandList(CL, Env1, Env2), lookup(Id, Env2, Val), Val1 is Val + 1,
-    update(Id, Val1, Env2, Env3), eval_forLoop_range(t_for_range(I, D1, D2, CL), Env3, NewEnv).
+    eval_commandList(CL, Env1, Env2), eval_expression(I, Env2, Env2, Val), Val1 is Val + 1,
+    eval_identifier_LHS(I, Env2, Env3, Val1), eval_forLoop_range(t_for_range(I, D1, D2, CL), Env3, NewEnv).
 
-eval_forLoop_range(t_for_range(I, _D1, D2, _CL), Env, Env) :-
-    eval_boolean(t_boolean_lt(I, D2), Env, Env, false).
+eval_forLoop_range(t_for_range(I, _D1, D2, _CL), Env, NewEnv) :-
+    eval_boolean(t_boolean_lt(I, D2), Env, Env, false), eval_identifier_LHS(I, Env, NewEnv, 0).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% Lists Grammar %%%%%%%%%%%%%%%%%%%%%%%%

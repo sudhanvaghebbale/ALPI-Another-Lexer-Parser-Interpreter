@@ -15,8 +15,12 @@
 
 
 //Programs
-?-  program(P,[begin,num,x,=,5,;,dict,dct,=,'{','"',key1,'"',:,'"',value1,'"',,,'"',key2,'"',:,'"',value2,'"','}',;,x,=,7,;,end],[]), eval_program(P,[],FEnv)
+?-  program(P,[begin,num,x,=,5,dict,dct,=,'{','"',key1,'"',:,'"',value1,'"',,,'"',key2,'"',:,'"',value2,'"','}',x,=,7,end],[]), eval_program(P,[],FEnv)
 
-?-  program(P,[begin,num,x,=,5,;,dict,dct,=,'{','"',key1,'"',:,'"',value1,'"',,,'"',key2,'"',:,'"',value2,'"','}',;,list,lst,=,'[',5,,,6,,,7.56,']',;,lst,'[',2,']',=,69,;,dct,'[','"',key2,'"',']',=,lst,'[',2,']',;,x,=,7,;,end],[]), eval_program(P,[],FEnv)
+?-  program(P,[begin,num,x,=,5,dict,dct,=,'{','"',key1,'"',:,'"',value1,'"',,,'"',key2,'"',:,'"',value2,'"','}',list,lst,=,'[',5,,,6,,,7.56,']',lst,'[',2,']',=,69,dct,'[','"',key2,'"',']',=,lst,'[',2,']',x,=,7,end],[]), eval_program(P,[],FEnv)
 
-?- program(P,[begin,num,x,=,5,;,x,=,7,;,while,'(',x,<=,10,')','{',x,=,x,+,1,'}',;,end],[])
+?- program(P,[begin,num,x,=,5,str,s,x,=,7,while,'(',x,<=,10,')','{',x,=,x,+,1,;,'}',s,=,rev,'(','"',ankit,'"',')',end],[]).
+
+?- program(P,[begin,num,x,=,5,str,s,x,=,7,while,'(',x,<=,10,')','{',x,=,x,+,1,'}',s,=,concat,'(','"',ankit,'"','"',vutukuri,'"',')',end],[]), eval_program(P,[],FEnv).
+
+?- program(P,[begin,num,x,=,5,dict,dct,=,'{','"',key1,'"',:,'"',value1,'"',,,'"',key2,'"',:,'"',value2,'"','}',list,lst,=,'[',5,,,6,,,7.56,']',lst,'[',2,']',=,69,dct,'[','"',key2,'"',']',=,lst,'[',2,']',x,=,7,end],[]), eval_program(P,[],FEnv)
