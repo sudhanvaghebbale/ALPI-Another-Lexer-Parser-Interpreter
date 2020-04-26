@@ -10,5 +10,13 @@
 - [x] Tokenizer doesn't tokenize ,.+-^|/\= so, need spaces between characters when declaring them. 
 - [ ] To make the lexer.py take filenames as arguments from shell to compile tokens on-the-go. 
 - [ ] ~~Execute Multiple files at once?~~
+- [ ] Accomodate  (, {, [ for prolog script in lexer.
+
+
+### Rules:
+
+* When Writing Strings please make sure to include spaces between start quote and end quote eg: x = ' Hello '. 
+* Strings inside print or declaration should always enclosed by single quotes, not other variation.
+
 
 

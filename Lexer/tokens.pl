@@ -4,7 +4,7 @@
 
 
 main :-
-    open('tokens.txt', read, Str),
+    open('/Users/jubanjanmacbook/PycharmProjects/502_Project/SER502-Spring2020-Team26/Lexer/tokens.txt', read, Str),
     read_file(Str,Lines),
     close(Str),
     write(Lines), nl,

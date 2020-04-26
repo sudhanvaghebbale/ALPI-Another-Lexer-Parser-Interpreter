@@ -11,7 +11,7 @@ begin
 
     num r; num u = 0;
     num z; num v;
-    str s = "sudhanva";
+    str s = ' sudhanva ';
     num y = 0;
     for i in range(1, 5){
         x = x + 1;
@@ -31,6 +31,7 @@ begin
     }
 
     x < 3 ? r = 0 : r = 1 ;
+    print(' x_y_z ')
 end 
 
 
