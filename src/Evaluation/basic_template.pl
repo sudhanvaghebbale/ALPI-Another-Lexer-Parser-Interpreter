@@ -12,12 +12,14 @@ eval_program(t_program(K), Env, FinalEnv) :- eval_block(K, Env, FinalEnv).
 %%%%%%%%%%%%%%%%%%%%%%%%% Block Section %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-block(t_block(DL, CL)) --> [begin],declarationList(DL), commandList(CL),[end].
+block(t_block(DL, CL)) --> [begin], declarationList(DL), commandList(CL), [end].
 
-% Sudhanva, try using this for functions.
-%func_block(t_block(DL,CL))--> declarationList(DL), commandList(CL).
+funcBlock(t_funcBlock(DL, CL)) --> declarationList(DL), commandList(CL).
 
 eval_block(t_block(D, C), Env, NewEnv) :-
+    eval_declarationList(D, Env, Env1), eval_commandList(C, Env1, NewEnv).
+
+eval_funcBlock(t_funcBlock(D, C), Env, NewEnv) :-
     eval_declarationList(D, Env, Env1), eval_commandList(C, Env1, NewEnv).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -51,7 +53,6 @@ eval_identifier_RHS(t_listID(Id,S),Env,Val):- eval_string(S,Key), lookupDict(Id,
 
 declarationList(t_declarationList(D, DL)) --> declaration(D), declarationList(DL).
 declarationList(t_declarationList(D)) --> declaration(D).
-declarationList(t_declarationList()) --> [].
 
 declaration(t_declaration(I)) -->  dataType, varIdentifier(I).
 declaration(t_funcDeclaration(FD)) --> functionDeclaration(FD).
@@ -123,8 +124,6 @@ eval_declarationList(t_declarationList(C, CL), Env, NewEnv) :-
 
 % declarationList(t_decList(D)) --> declaration(D).
 eval_declarationList(t_declarationList(C), Env, NewEnv) :- eval_declaration(C, Env, NewEnv).
-
-eval_declarationList(t_declarationList(), Env, Env).
 
 % declaration(t_declaration(I)) -->  dataType, identifier(I).
 eval_declaration(t_declaration(Id), Env, NewEnv) :- update(Id, 0, Env, NewEnv).
@@ -471,10 +470,10 @@ updateAppend(Id, Val, [H | T], [H | R]) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 functionDeclaration(t_funcDeclr(I, PL, DL, CL)) --> [func], identifier(I), ['('],
-    parameterList(PL), [')'], ['{'], block(t_block(DL, CL)), ['}'].
+    parameterList(PL), [')'], ['{'], funcBlock(t_funcBlock(DL, CL)), ['}'].
 
 functionDeclaration(t_funcDeclr(I, PL, DL, CL, E)) --> [func], identifier(I), ['('],
-    parameterList(PL), [')'], ['{'], block(t_block(DL, CL)), return(E), ['}'].
+    parameterList(PL), [')'], ['{'], funcBlock(t_funcBlock(DL, CL)), return(E), ['}'].
 
 parameterList(t_parList(P, PL)) --> parameter(P), [,], parameterList(PL).
 parameterList(t_parList(P)) --> parameter(P).
@@ -492,21 +491,21 @@ return(t_return(E)) --> [return], expression(E).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 eval_functionDeclaration(t_funcDeclr(I, PL, DL, CL), Env, NewEnv) :-
-    eval_id(I, Id), update(Id, [PL, t_block(DL, CL)], Env, NewEnv).
+    eval_id(I, Id), update(Id, [PL, t_funcBlock(DL, CL)], Env, NewEnv).
 
 eval_functionDeclaration(t_funcDeclr(I, PL, DL, CL, E), Env, NewEnv) :-
-    eval_id(I, Id), update(Id, [PL, t_block(DL, CL), E], Env, NewEnv).
+    eval_id(I, Id), update(Id, [PL, t_funcBlock(DL, CL), E], Env, NewEnv).
 
 eval_funCall(t_funCall(I, CPL), Env, Env) :-
      eval_id(I, Id),  lookup(Id, Env, [P, K]),
-    eval_parameters(I, CPL, P, Env, Env1), lookup(Id, Env1, [P, K | T]), eval_block(K, T, _Env2), !.
+    eval_parameters(I, CPL, P, Env, Env1), lookup(Id, Env1, [P, K | T]), eval_funcBlock(K, T, _Env2).
 
 eval_funCall(t_funCall(I, CPL), Env, Env, Val) :- eval_id(I, Id),  lookup(Id, Env, [P, K, R]),
-    eval_parameters(I, CPL, P, Env, Env1), lookup(Id, Env1, [P, K, R | T]), eval_block(K, T, Env2),
-    eval_return(R, Env2, _Env3, Val), !.
+    eval_parameters(I, CPL, P, Env, Env1), lookup(Id, Env1, [P, K, R | T]), eval_funcBlock(K, T, Env2),
+    eval_return(R, Env2, _Env3, Val).
 
 eval_return(t_return(E), Env, NewEnv, Val) :- eval_expression(E, Env, NewEnv, Val).
-
+ 
 eval_parameters(I, CPL, P, Env, NewEnv) :-
     eval_id(I, Id), eval_callParList(CPL, Env, Env1, [], ComPar), eval_parList(P, Env1, Env2, [], Par),
     localScope(Id, ComPar, Par, Env2, NewEnv).
