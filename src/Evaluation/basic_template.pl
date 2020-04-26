@@ -5,14 +5,17 @@
 %%%%%%%%%%%%%%%%%%%%%%% Program Section %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-program(t_program(K)) --> [begin], block(K), [end].
+program(t_program(K)) --> block(K).
 eval_program(t_program(K), Env, FinalEnv) :- eval_block(K, Env, FinalEnv).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%% Block Section %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-block(t_block(DL, CL)) --> declarationList(DL), [;],  commandList(CL), [;].
+block(t_block(DL, CL)) --> [begin],declarationList(DL), commandList(CL),[end].
+
+% Sudhanva, try using this for functions.
+%func_block(t_block(DL,CL))--> declarationList(DL), commandList(CL).
 
 eval_block(t_block(D, C), Env, NewEnv) :-
     eval_declarationList(D, Env, Env1), eval_commandList(C, Env1, NewEnv).
@@ -46,7 +49,7 @@ eval_identifier_RHS(t_listID(Id,S),Env,Val):- eval_string(S,Key), lookupDict(Id,
 %%%%%%%%%%%%%%%%%%%% Declaration Grammar %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-declarationList(t_declarationList(D, DL)) --> declaration(D), [;], declarationList(DL).
+declarationList(t_declarationList(D, DL)) --> declaration(D), declarationList(DL).
 declarationList(t_declarationList(D)) --> declaration(D).
 declarationList(t_declarationList()) --> [].
 
@@ -158,15 +161,16 @@ eval_declaration(t_init_dict(Id,D), Env, NewEnv) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%% Command Grammar %%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-commandList(t_commandList(C, CL)) --> command(C),  [ ; ],  commandList(CL).
+commandList(t_commandList(C, CL)) --> command(C), commandList(CL).
 commandList(t_commandList(C))  --> command(C).
+%commandList(t_commandList()) --> [].
 
 command(t_command_assign_expr(I,E)) -->  identifier(I), [=], expression(E).
 command(t_command_assign_id(ID1,ID2)) -->  identifier(ID1), [=], identifier(ID2).
 command(t_command_assign_string(I,S)) -->  identifier(I), [=], string(S).
 command(t_command_assign_bool(I,B)) -->  identifier(I), [=], boolean(B).
 command(t_command_ifte(B,CL1,CL2)) --> [if], ['('], boolean(B), [')'], ['{'],
-    commandList(CL1), [;], [ '}' ], [else], ['{'], commandList(CL2), ['}'].
+    commandList(CL1), [ '}' ], [else], ['{'], commandList(CL2), ['}'].
 command(t_command_while(B,CL)) --> [while], ['('], boolean(B), [')'], ['{'],
     commandList(CL), ['}'].
 
@@ -179,10 +183,10 @@ command(t_command_ternary(B,E1,E2)) -->
     boolean(B), [?],  expression(E1), [:], expression(E2).
 
 command(t_command_for_inc(I,E,B,IN,CL)) --> [for], [ '(' ], value(I), [=],
-    expression(E), [ ; ], boolean(B), [ ; ],
+    expression(E), [;], boolean(B), [;],
     increment(IN), [ ')' ], [ '{' ], commandList(CL), [ '}' ].
 command(t_command_for_dec(I,E,B,DEC,CL)) --> [for], [ '(' ], value(I), [=],
-    expression(E), [ ; ], boolean(B), [ ; ], decrement(DEC), [ ')' ], [ '{' ],
+    expression(E), [;], boolean(B), [ ; ], decrement(DEC), [ ')' ], [ '{' ],
     commandList(CL), [ '}' ].
 
 command(t_command_for_range(I,D1,D2,CL)) --> [for], value(I), [in], [range],  ['('],
@@ -205,6 +209,8 @@ eval_commandList(t_commandList(C, CL), Env, NewEnv) :-
     eval_command(C, Env, Env1), eval_commandList(CL, Env1, NewEnv).
 
 eval_commandList(t_commandList(C), Env, NewEnv) :- eval_command(C, Env, NewEnv).
+
+eval_commandList(t_commandList(), Env, Env).
 
 % command(t_command_assign_expr(I,E)) --> identifier(I),[=],expression(E).
 eval_command(t_command_assign_expr(I, E), Env, NewEnv) :-
@@ -468,15 +474,15 @@ functionDeclaration(t_funcDeclr(I, PL, DL, CL)) --> [func], identifier(I), ['(']
     parameterList(PL), [')'], ['{'], block(t_block(DL, CL)), ['}'].
 
 functionDeclaration(t_funcDeclr(I, PL, DL, CL, E)) --> [func], identifier(I), ['('],
-    parameterList(PL), [')'], ['{'], block(t_block(DL, CL)), return(E), [;], ['}'].
+    parameterList(PL), [')'], ['{'], block(t_block(DL, CL)), return(E), ['}'].
 
-parameterList(t_parList(P, PL)) --> parameter(P), [','], parameterList(PL).
+parameterList(t_parList(P, PL)) --> parameter(P), [,], parameterList(PL).
 parameterList(t_parList(P)) --> parameter(P).
 parameter(I) --> identifier(I).
 
 funCall(t_funCall(I, CPL)) --> value(I), ['('], callParameterList(CPL), [')'].
 callParameterList(t_callParList(CP, CPS)) -->
-    callParameter(CP), [','], callParameterList(CPS).
+    callParameter(CP), [,], callParameterList(CPS).
 callParameterList(t_callParList(CP)) --> callParameter(CP).
 callParameter(I) --> value(I).
 return(t_return(E)) --> [return], expression(E).
