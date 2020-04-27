@@ -3,14 +3,24 @@
 :-initialization(main,program).
 
 
-main :-
-    open('/Users/jubanjanmacbook/PycharmProjects/502_Project/SER502-Spring2020-Team26/Lexer/tokens.txt', read, Str),
+main(P) :-
+    open('/home/user/Projects/SER502-Spring2020-Team26-development/Lexer/tokens.txt', read, Str),
     read_file(Str,Lines),
     close(Str),
-    write(Lines), nl,
+    list_butlast(Lines,Tokens),
+    write(Tokens), nl,
+    program(P,Tokens,[]),
+
     % insert the code here, lines is the list of tokens
 
     halt.
+
+list_butlast([X|Xs], Ys) :-
+   list_butlast_prev(Xs, Ys, X).
+
+list_butlast_prev([], [], _).
+list_butlast_prev([X1|Xs], [X0|Ys], X0) :-
+   list_butlast_prev(Xs, Ys, X1).
 
 read_file(Stream,[]) :-
     at_end_of_stream(Stream).
