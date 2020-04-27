@@ -67,8 +67,8 @@ dataType --> [num] ; [str] ; [bool] ; [list] ; [dict].
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% String Grammar %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-string(t_string(S)) --> ['"'], stringTerm(S), ['"'].
+%Only single quote strings allowed.
+%string(t_string(S)) --> ['"'], stringTerm(S), ['"'].
 string(t_string(S)) --> ['\''], stringTerm(S), ['\''].
 stringTerm(t_stringTerm(S)) --> [S], {atom(S)}.
 stringTerm(t_stringTerm()) --> [].
@@ -505,7 +505,7 @@ eval_funCall(t_funCall(I, CPL), Env, Env, Val) :- eval_id(I, Id),  lookup(Id, En
     eval_return(R, Env2, _Env3, Val).
 
 eval_return(t_return(E), Env, NewEnv, Val) :- eval_expression(E, Env, NewEnv, Val).
- 
+
 eval_parameters(I, CPL, P, Env, NewEnv) :-
     eval_id(I, Id), eval_callParList(CPL, Env, Env1, [], ComPar), eval_parList(P, Env1, Env2, [], Par),
     localScope(Id, ComPar, Par, Env2, NewEnv).
