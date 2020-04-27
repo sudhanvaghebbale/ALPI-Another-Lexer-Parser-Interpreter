@@ -498,11 +498,11 @@ eval_functionDeclaration(t_funcDeclr(I, PL, DL, CL, E), Env, NewEnv) :-
 
 eval_funCall(t_funCall(I, CPL), Env, Env) :-
      eval_id(I, Id),  lookup(Id, Env, [P, K]),
-    eval_parameters(I, CPL, P, Env, Env1), lookup(Id, Env1, [P, K | T]), eval_funcBlock(K, T, _Env2).
+    eval_parameters(I, CPL, P, Env, Env1), lookup(Id, Env1, [P, K | T]), eval_funcBlock(K, T, _Env2), !.
 
 eval_funCall(t_funCall(I, CPL), Env, Env, Val) :- eval_id(I, Id),  lookup(Id, Env, [P, K, R]),
     eval_parameters(I, CPL, P, Env, Env1), lookup(Id, Env1, [P, K, R | T]), eval_funcBlock(K, T, Env2),
-    eval_return(R, Env2, _Env3, Val).
+    eval_return(R, Env2, _Env3, Val), !.
 
 eval_return(t_return(E), Env, NewEnv, Val) :- eval_expression(E, Env, NewEnv, Val).
 
