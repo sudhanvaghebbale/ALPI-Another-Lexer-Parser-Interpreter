@@ -67,9 +67,9 @@ dataType --> [num] ; [str] ; [bool] ; [list] ; [dict].
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% String Grammar %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Only single quote strings allowed.
-%string(t_string(S)) --> ['"'], stringTerm(S), ['"'].
-string(t_string(S)) --> ['\''], stringTerm(S), ['\''].
+%Only double quote strings allowed.
+string(t_string(S)) --> ['"'], stringTerm(S), ['"'].
+% string(t_string(S)) --> ['\''], stringTerm(S), ['\''].
 stringTerm(t_stringTerm(S)) --> [S], {atom(S)}.
 stringTerm(t_stringTerm()) --> [].
 
@@ -82,8 +82,9 @@ concatString(t_concatStr(S1, S2)) --> [concat], ['('], expression(S1) , expressi
 % concatString(t_concatStr(I1, I2)) --> [concat], ['('], identifier(I1),
 % identifier(I2), [')'].
 revString(t_revStr(S)) --> [rev], ['('], expression(S), [')'].
+splitString(t_splitStr(S, D)) --> [split], ['('], expression(S), number(D), [')'].      
 splitString(t_splitStr(S, S1, P)) --> [split], ['('], expression(S), expression(S1), expression(P), [')'].
-stringLength(t_strLen(S)) --> [len], ['('], expression(S), [')'].
+stringLength(t_strLen(S)) --> [len], ['('], expression(S), [')'].       stringLength(t_strLen(S)) --> [len], ['('], expression(S), [')'].
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -111,9 +112,7 @@ eval_concatString(t_concatStr(S1, S2), Ans) :- eval_expression(S1,_,_,String1), 
 % eval_splitString(String, SepChars, PadChars, SubStrings) :-
 % split_string(String, SepChars, PadChars, SubStrings).
 
-
 eval_splitString(t_splitStr(S, S1, P), SubStrings) :-  split_string(S, S1, P, SubStrings).
-
 
 %String Length
 eval_stringLength(t_strLen(S), Ans) :- eval_expression(S,_,_,String), string_length(String, Ans).
@@ -129,7 +128,7 @@ eval_declarationList(t_declarationList(C, CL), Env, NewEnv) :-
 eval_declarationList(t_declarationList(C), Env, NewEnv) :- eval_declaration(C, Env, NewEnv).
 
 % declaration(t_declaration(I)) -->  dataType, identifier(I).
-eval_declaration(t_declaration(Id), Env, NewEnv) :- update(Id, 0, Env, NewEnv).
+eval_declaration(t_declaration(Id), Env, NewEnv) :- update(Id, 'None', Env, NewEnv).
 
 eval_declaration(t_funcDeclaration(FD), Env, NewEnv) :- eval_functionDeclaration(FD, Env, NewEnv).
 
@@ -171,6 +170,8 @@ command(t_command_assign_expr(I,E)) -->  identifier(I), [=], expression(E).
 command(t_command_assign_id(ID1,ID2)) -->  identifier(ID1), [=], identifier(ID2).
 command(t_command_assign_string(I,S)) -->  identifier(I), [=], string(S).
 command(t_command_assign_bool(I,B)) -->  identifier(I), [=], boolean(B).
+command(t_command_if(B,CL1)) --> [if], ['('], boolean(B), [')'], ['{'],
+    commandList(CL1), [ '}' ].
 command(t_command_ifte(B,CL1,CL2)) --> [if], ['('], boolean(B), [')'], ['{'],
     commandList(CL1), [ '}' ], [else], ['{'], commandList(CL2), ['}'].
 command(t_command_while(B,CL)) --> [while], ['('], boolean(B), [')'], ['{'],
@@ -212,8 +213,6 @@ eval_commandList(t_commandList(C, CL), Env, NewEnv) :-
 
 eval_commandList(t_commandList(C), Env, NewEnv) :- eval_command(C, Env, NewEnv).
 
-eval_commandList(t_commandList(), Env, Env).
-
 % command(t_command_assign_expr(I,E)) --> identifier(I),[=],expression(E).
 eval_command(t_command_assign_expr(I, E), Env, NewEnv) :-
     eval_expression(E, Env, Env1, Val), eval_identifier_LHS(I,Env1,NewEnv,Val).
@@ -229,6 +228,13 @@ eval_command(t_command_assign_bool(I,B), Env, NewEnv) :-
 % command(t_command_assign_id(I,I)) --> identifier(I),[=],identifier(I).
 eval_command(t_command_assign_id(I1,I2), Env, NewEnv) :-
     eval_identifier_RHS(I2,Env,Val), eval_identifier_LHS(I1,Env,NewEnv,Val).
+
+% Execute commandList if boolean is true
+eval_command(t_command_if(B, C1), Env, NewEnv) :-
+    eval_boolean(B, Env, Env, true), eval_commandList(C1, Env, NewEnv).
+
+% Do nothing if boolean is false
+eval_command(t_command_if(B, _C1), Env, Env) :- eval_boolean(B, Env, Env, false).
 
 % Execute commandList if boolean is true
 eval_command(t_command_ifte(B, C1, _C2), Env, NewEnv) :-
@@ -273,7 +279,9 @@ eval_command(t_command_for_range(I, D1, D2, CL), Env, NewEnv) :-
     eval_command(t_command_assign_expr(I, D1), Env, Env1),
     eval_forLoop_range(t_for_range(I, D1, D2, CL), Env1, NewEnv).
 
-eval_command(t_command_stringOps(I,OP),Env,NewEnv) :- eval_stringOps(OP,Val), eval_identifier_LHS(I,Env,NewEnv,Val).
+eval_command(t_command_stringOps(I,OP),Env,NewEnv) :- 
+    eval_stringOps(OP,Val), eval_identifier_LHS(I,Env,NewEnv,Val).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%% Boolean Grammar %%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -293,8 +301,8 @@ boolean(t_boolean_gteq(E1, E2)) --> expression(E1), [>=], expression(E2).
 %%%%%%%%%%%%%%%%%%%%%%%%%% Boolean Evaluation %%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-eval_boolean(true, Env, Env, true).
-eval_boolean(false, Env, Env, false).
+eval_boolean(t_boolean(true), Env, Env, true).
+eval_boolean(t_boolean(false), Env, Env, false).
 
 eval_boolean(t_boolean_equal(E1, E2), Env, NewEnv, Val) :-
     eval_expression(E1, Env, Env1, Val1), eval_expression(E2, Env1, NewEnv, Val2),
@@ -570,12 +578,11 @@ printStatement(t_print_var(I)) --> identifier(I).
 %%%%%%%%%%%%%%%%%%%%%%% Print Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-eval_printStatement(t_print_var(P, PS), Env, Env) :- eval_id(P, Id),
-    write(Id), write(' = '), eval_identifier_RHS(P, Env, Val),
-    write(Val), write(' || '), eval_printStatement(PS, Env, Env).
+eval_printStatement(t_print_var(P, PS), Env, Env) :- eval_id(P, Id), eval_identifier_RHS(P, Env, Val),
+    print_message(debug, format('~a = ~a', [Id, Val])), eval_printStatement(PS, Env, Env), !.
 
-eval_printStatement(t_print_var(P), Env, Env) :- eval_id(P, Id),
-    write(Id), write(' = '), eval_identifier_RHS(P, Env, Val), write(Val), nl.
+eval_printStatement(t_print_var(P), Env, Env) :- eval_id(P, Id), eval_identifier_RHS(P, Env, Val),
+    print_message(debug, format('~a = ~a', [Id, Val])), !.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% For Loop Grammar %%%%%%%%%%%%%%%%%%%%%%%%
