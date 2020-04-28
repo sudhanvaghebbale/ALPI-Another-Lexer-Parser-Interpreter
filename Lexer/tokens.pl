@@ -556,51 +556,64 @@ return(t_return(E)) --> [return], expression(E).
 %%%%%%%%%%%%%%%%%%%%%%%% Function Evaluation %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Function Declaration for functions without return statement
 eval_functionDeclaration(t_funcDeclr(I, PL, DL, CL), Env, NewEnv) :-
     eval_id(I, Id), update(Id, [PL, t_funcBlock(DL, CL)], Env, NewEnv).
 
+% Function Declaration for functions with return statement
 eval_functionDeclaration(t_funcDeclr(I, PL, DL, CL, E), Env, NewEnv) :-
     eval_id(I, Id), update(Id, [PL, t_funcBlock(DL, CL), E], Env, NewEnv).
 
+% Function Call for functions without return
 eval_funCall(t_funCall(I, CPL), Env, Env) :-
      eval_id(I, Id),  lookup(Id, Env, [P, K]),
     eval_parameters(I, CPL, P, Env, Env1), lookup(Id, Env1, [P, K | T]), eval_funcBlock(K, T, _Env2), !.
 
+% Function Call for functions with return
 eval_funCall(t_funCall(I, CPL), Env, Env, Val) :- eval_id(I, Id),  lookup(Id, Env, [P, K, R]),
     eval_parameters(I, CPL, P, Env, Env1), lookup(Id, Env1, [P, K, R | T]), eval_funcBlock(K, T, Env2),
     eval_return(R, Env2, _Env3, Val), !.
 
-eval_funCall(t_funCall(I, _CPL), Env, Env, _Val) :- eval_id(I, Id),
+% To check if a particular function is declared or not. 
+eval_funCall(t_funCall(I, _CPL), Env, Env, _Val) :- eval_id(I, Id), not(lookup(Id, Env, Val)),
     print_message(error, format('Function "~s" does not exist!', [Id])), fail.
 
+% To evaluate the return statement
 eval_return(t_return(E), Env, NewEnv, Val) :- eval_expression(E, Env, NewEnv, Val).
 
+% To check the length of the parameters passed and merge them to a tuple for evaluation.
 eval_parameters(I, CPL, P, Env, NewEnv) :-
     eval_id(I, Id), eval_callParList(CPL, Env, Env1, [], ComPar), eval_parList(P, Env1, Env2, [], Par),
     localScope(Id, ComPar, Par, Env2, NewEnv).
 
+% Produce error if the parameters don't match
 eval_parameters(I, CPL, P, Env, Env2) :-
     eval_id(I, Id), eval_callParList(CPL, Env, Env1, [], ComPar), eval_parList(P, Env1, Env2, [], Par),
     find_length(ComPar, Val1), find_length(Par, Val2), Val1 =\= Val2,
     print_message(error, format('Parameters passed to function "~s" do not match with its definition!', [Id])), 
     fail.
 
+% To get all the function call parameters
 eval_callParList(t_callParList(P, PS), Env, Env, Val, Res) :-
     eval_expression(P, Env, Env, Id), append(Val, Id, Result), eval_callParList(PS, Env, Env, [Result], Res).
 
 eval_callParList(t_callParList(P), Env, Env, Val, Result) :-
     eval_expression(P, Env, Env, Id), append(Val, Id, Result).
 
+% Empty parameter call list
 eval_callParList(t_callParList(), Env, Env, Val, Val).
 
+% To get all function parameters
 eval_parList(t_parList(P, PS), Env, Env, Val, Res) :-
     eval_id(P, Id), append(Val, Id, Result), eval_parList(PS, Env, Env, [Result], Res).
 
 eval_parList(t_parList(P), Env, Env, Val, Result) :-
     eval_id(P, Id), append(Val, Id, Result).
 
+% Empty parameter list
 eval_parList(t_parList(), Env, Env, Val, Val).
 
+% To join all the parameters into a tuple
 localScope(_, [], [], Env, Env).
 
 localScope(Id, H, H1, Env, NewEnv) :- updateAppend(Id, (H1, H), Env, NewEnv).
@@ -608,12 +621,12 @@ localScope(Id, H, H1, Env, NewEnv) :- updateAppend(Id, (H1, H), Env, NewEnv).
 localScope(Id, [H | T], [H1 | T1], Env, NewEnv) :- updateAppend(Id, (H1, H), Env, Env1),
     localScope(Id, T, T1, Env1, NewEnv).
 
+% To get from the environment
 eval_id(t_id(t_varID(X)), X).
 eval_id(t_varID(X), X).
 
-
+% To find the length of parameter list.
 find_length([], 0).
-find_length(_X, 1).
 find_length([_H | T], Length) :- find_length(T, Val), Length is Val + 1.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
