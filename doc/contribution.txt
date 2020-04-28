@@ -62,3 +62,20 @@ Contribution after Milestone 1:
             - Functions Evaluation
             - Fix Functions to allow declarations
             - For Loop and print Statement.
+            
+     - Week 3:
+        1. Ankit Vutukuri
+            - Squashing bugs
+            - Testing Sample Programs
+            - Error Handling Predicates
+        2. Harmish Ganatra
+            - Strings Updation
+            - Error Handling Predicates
+            - Testing Sample Programs
+        3. Jubanjan Dhar
+            - Integrate program to run in the pipeline
+            - Fix bugs in the lexer
+        4. Sudhanva Hebbale
+            - Squashing Bugs
+            - Testing Sample Programs
+            - Error Handling Predicates
