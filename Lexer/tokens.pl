@@ -4,6 +4,7 @@
 
 
 main :-
+    %Paste the path to the tokens.txt file here
     open('C:\\ASU\\SER503\\SER502-Spring2020-Team26\\Lexer\\tokens.txt', read, Str),
     read_file(Str,Lines),!,
     close(Str),
@@ -11,20 +12,18 @@ main :-
     writeq(Tokens), nl,
     program(P,Tokens,[]),
     eval_program(P,[],_),
-    % insert the code here, lines is the list of tokens
-
     halt.
 
+%Removes end_of_file token
 list_butlast([X|Xs], Ys) :-
    list_butlast_prev(Xs, Ys, X).
-
 list_butlast_prev([], [], _).
 list_butlast_prev([X1|Xs], [X0|Ys], X0) :-
    list_butlast_prev(Xs, Ys, X1).
 
+%Reads tokens line by line from the file
 read_file(Stream,[]) :-
     at_end_of_stream(Stream).
-
 read_file(Stream,[X|L]) :-
     \+ at_end_of_stream(Stream),
     read(Stream,X),
@@ -53,31 +52,6 @@ eval_block(t_block(D, C), Env, NewEnv) :-
 
 eval_funcBlock(t_funcBlock(D, C), Env, NewEnv) :-
     eval_declarationList(D, Env, Env1), eval_commandList(C, Env1, NewEnv).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%% Identifier Grammar %%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-identifier(t_varID(I)) --> varIdentifier(I).
-identifier(t_listID(I, D)) --> varIdentifier(I), [ '[' ], number(D), [ ']' ].
-identifier(t_listID_identifier(I, D)) --> varIdentifier(I), ['['], varIdentifier(D), [']'].
-identifier(t_dictID(I,S)) --> varIdentifier(I), ['['], string(S), [']'].
-varIdentifier(I) -->  [I], {atom(I)}.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%% Identifier Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-eval_identifier_LHS(t_id(t_varID(Id)),Env,NewEnv,Val):- update(Id,Val,Env,NewEnv).
-eval_identifier_LHS(t_varID(Id),Env,NewEnv,Val):- update(Id,Val,Env,NewEnv).
-eval_identifier_LHS(t_listID(Id,Pos),Env,NewEnv,Val):- updateList(Id,Pos,Val,Env,NewEnv).
-eval_identifier_LHS(t_listID_identifier(Id1,Id2),Env,NewEnv,Val):- lookup(Id2,Env,Pos), updateList(Id1,Pos,Val,Env,NewEnv).
-eval_identifier_LHS(t_dictID(Id,Key),Env,NewEnv,Val):- eval_string(Key,Key1), updateDict(Id,Key1,Val,Env,NewEnv).
-
-eval_identifier_RHS(t_varID(Id),Env,Val):- lookup(Id,Env,Val).
-eval_identifier_RHS(t_listID(Id,Pos),Env,Val):- lookupList(Id,Pos,Env,Val).
-eval_identifier_RHS(t_listID_identifier(Id1,Id2),Env,Val):- lookup(Id2,Env,Pos), lookupList(Id1,Pos,Env,Val).
-eval_identifier_RHS(t_dictID(Id,S),Env,Val):- eval_string(S,Key), lookupDict(Id,Key,Env,Val).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -685,6 +659,51 @@ eval_forLoop_range(t_for_range(I, D1, D2, CL), Env, NewEnv) :-
 % To return current environment when boolean fails.
 eval_forLoop_range(t_for_range(I, _D1, D2, _CL), Env, NewEnv) :-
     eval_boolean(t_boolean_lt(I, D2), Env, Env, false), eval_identifier_LHS(I, Env, NewEnv, 0).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%% Identifier Grammar %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%Different formats for identifiers: 
+identifier(t_varID(I)) --> varIdentifier(I).
+
+%List index is specified as a number.
+identifier(t_listID(I, D)) --> varIdentifier(I), [ '[' ], number(D), [ ']' ].
+
+%List index is specified as a variable.
+identifier(t_listID_identifier(I, D)) --> varIdentifier(I), ['['], varIdentifier(D), [']'].
+
+%Dictionary identifier with key string.
+identifier(t_dictID(I,S)) --> varIdentifier(I), ['['], string(S), [']'].
+varIdentifier(I) -->  [I], {atom(I)}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%% Identifier Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%When identifier appears on LHS, update its value.
+eval_identifier_LHS(t_id(t_varID(Id)),Env,NewEnv,Val):- update(Id,Val,Env,NewEnv).
+eval_identifier_LHS(t_varID(Id),Env,NewEnv,Val):- update(Id,Val,Env,NewEnv).
+
+%Update the value at a specific list index.
+eval_identifier_LHS(t_listID(Id,Pos),Env,NewEnv,Val):- updateList(Id,Pos,Val,Env,NewEnv).
+eval_identifier_LHS(t_listID_identifier(Id1,Id2),Env,NewEnv,Val):- lookup(Id2,Env,Pos), updateList(Id1,Pos,Val,Env,NewEnv).
+
+%Update the value for a specific dictionary key.
+eval_identifier_LHS(t_dictID(Id,Key),Env,NewEnv,Val):- eval_string(Key,Key1), updateDict(Id,Key1,Val,Env,NewEnv).
+
+
+%When identifier appears on RHS, lookup its value.
+eval_identifier_RHS(t_varID(Id),Env,Val):- lookup(Id,Env,Val).
+
+%Lookup the value at a specific list index.
+eval_identifier_RHS(t_listID(Id,Pos),Env,Val):- lookupList(Id,Pos,Env,Val).
+eval_identifier_RHS(t_listID_identifier(Id1,Id2),Env,Val):- lookup(Id2,Env,Pos), lookupList(Id1,Pos,Env,Val).
+
+%Lookup the value for a specific dictionary key.
+eval_identifier_RHS(t_dictID(Id,S),Env,Val):- eval_string(S,Key), lookupDict(Id,Key,Env,Val).
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% Lists Grammar %%%%%%%%%%%%%%%%%%%%%%%%
