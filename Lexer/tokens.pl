@@ -515,6 +515,14 @@ check_numbers(Val1, Val2) :-
 lookup(Id, [], _) :-
     write("Error: "), write(Id), writeln(" does not exist!"), fail.
 */
+
+check_lookup(_, [], false).
+check_lookup(Id, [(Id, _) | _], true).
+check_lookup(Id, [_ | T], Val) :- lookup(Id, T, Val).
+
+lookup(Id, [(Id, Val) | _], Val).
+lookup(Id, [_ | T], Val) :- lookup(Id, T, Val).
+
 lookup(Id, [(Id, Val) | _], Val).
 lookup(Id, [_ | T], Val) :- lookup(Id, T, Val).
 
@@ -575,7 +583,7 @@ eval_funCall(t_funCall(I, CPL), Env, Env, Val) :- eval_id(I, Id),  lookup(Id, En
     eval_return(R, Env2, _Env3, Val), !.
 
 % To check if a particular function is declared or not. 
-eval_funCall(t_funCall(I, _CPL), Env, Env, _Val) :- eval_id(I, Id), not(lookup(Id, Env, Val)),
+eval_funCall(t_funCall(I, _CPL), Env, Env, _Val) :- eval_id(I, Id), check_lookup(Id, Env, false),
     print_message(error, format('Function "~s" does not exist!', [Id])), fail.
 
 % To evaluate the return statement
