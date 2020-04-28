@@ -10,7 +10,7 @@
 - [x] Tokenizer doesn't tokenize ,.+-^|/\= so, need spaces between characters when declaring them. 
 - [ ] To make the lexer.py take filenames as arguments from shell to compile tokens on-the-go. 
 - [ ] ~~Execute Multiple files at once?~~
-- [ ] Accomodate  (, {, [ for prolog script in lexer.
+- [x] Accomodate  (, {, [ for prolog script in lexer.
 
 
 ### Rules:

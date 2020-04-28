@@ -113,6 +113,15 @@ def handleSpace(res_,operand):
             del res_[i+2]
     return res_
 
+
+def isFloat(string):
+    try:
+        float(string)
+        return True
+    except ValueError:
+        return False
+
+
 if __name__ =='__main__':
     res_ =  Lexer('/Users/jubanjanmacbook/PycharmProjects/502_Project/SER502-Spring2020-Team26/Lexer/script.txt').tokenize()
     # check = ['begin', 'num', 'x', '=', '2', ';', 'num', 'r', ';', 'num', 'u', '=', '0', ';', 'num', 'z', ';', 'num', 'v', ';', 'str', 's', '=', '"', 'sudhanva', '"', ';', 'num', 'y', '=', '0', ';', 'for', 'i', 'in', 'range', '(', '1', ',' , '5', ')', '{', 'x', '=', 'x', '+', '1', ';', 'y', '=', 'y', '+', '1', '}', ';', 'while', '(', 'not', 'u', '==', '3', ')', '{', 'z', '=', 'x', '*', '2', ';', 'u', '=', 'u', '+', '1','}',';', 'if', '(', 'z', '>', 'x', ')', '{', 'v', '=', '1',';', '}', 'else', '{', 'v', '=', '0',';', '}', ';', 'x', '<', '3', '?', 'r', '=', '0', ':', 'r', '=' , '1', ';', 'end']
@@ -169,12 +178,14 @@ if __name__ =='__main__':
 
     strg = ''
     for i in res_f:
-        if i == '(' or i ==')' or i == '{' or i == '}' or i =='[' or i == ']' or i == '%':
-            strg += '"'+"'"+str(i)+"'"+'"'+'.'+'\n'
-        elif i == "'":
-            strg += '"'+"'"+str(i)+"'"+'"'+'.'+'\n'
+        if i.isnumeric():
+            strg += i+"."+'\n'
+        elif isFloat(i):
+            strg += i+"."+'\n'
         else:
             strg += "'"+str(i)+"'"+'.'+'\n'
+    
+   
 
     with open('tokens.txt','w') as f:
         f.write(strg)
