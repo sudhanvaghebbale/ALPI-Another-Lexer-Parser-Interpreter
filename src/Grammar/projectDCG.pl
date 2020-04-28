@@ -124,12 +124,14 @@ functionDeclaration(t_funcDeclr(I, PL, DL, CL, E)) --> [func], identifier(I), ['
 
 parameterList(t_parList(P, PL)) --> parameter(P), [,], parameterList(PL).
 parameterList(t_parList(P)) --> parameter(P).
+parameterList(t_parList()) --> [].
 parameter(I) --> identifier(I).
 
 funCall(t_funCall(I, CPL)) --> value(I), ['('], callParameterList(CPL), [')'].
 callParameterList(t_callParList(CP, CPS)) -->
     callParameter(CP), [,], callParameterList(CPS).
 callParameterList(t_callParList(CP)) --> callParameter(CP).
+callParameterList(t_callParList()) --> [].
 callParameter(I) --> value(I).
 return(t_return(E)) --> [return], expression(E).
 
