@@ -406,13 +406,13 @@ number(X) --> [X], {number(X)}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Update the new value into the lookup table
-eval_expression(t_command_assign(Id, E), Env, NewEnv, Val1) :-
+eval_expression(t_expr_assign(Id, E), Env, NewEnv, Val1) :-
     eval_expression(E, Env, Env1, Val1), eval_identifier_LHS(Id,Env1,NewEnv,Val1).
 
 % E -> E + E
 eval_expression(t_add(X,Y), Env, NewEnv, Val) :-
-    eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2), 
-    Val is Val1 + Val2.
+    eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2),
+    check_numbers(Val1, Val2), Val is Val1 + Val2.
 
 % E -> E - E
 eval_expression(t_subr(X,Y), Env, NewEnv, Val) :-
@@ -443,9 +443,9 @@ eval_expression(t_id(X),Env,Env,Val):- eval_identifier_RHS(X,Env,Val).
 
 eval_expression(t_expr_string(X),Env,Env,Val):- eval_string(X,Val).
 
-check_numbers(Val1, Val2) :- number(Val1), number(Val2).
+check_numbers(Val1, Val2) :- number(Val1), number(Val2), !.
 check_numbers(Val1, Val2) :- 
-    print_message(error, format('Illegal operation between ~d and ~s.', [Val1, Val2])), fail.
+    print_message(error, format('Illegal operation between ~a and ~a.', [Val1, Val2])), fail.
 
 % To extract id from the tree node
 % Moved to identifier section
