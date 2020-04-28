@@ -3,7 +3,7 @@ begin
     num temp
     num j1
     //Traverse through all array elements 
-    //for i in range(0, 7){
+    for i in range(0, 7){
         for j in range(0, 6){
 	    print j           
 	    j1 = j + 1
@@ -13,8 +13,7 @@ begin
 		arr[j] = temp
 	    }
 	}
-    //}
-    arr[2] = " ankit "
+    }
     
     print arr
 end

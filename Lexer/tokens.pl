@@ -107,7 +107,6 @@ stringTerm(t_stringTerm()) --> [].
 
 stringOps(t_stringOps_concat(CST)) -->  concatString(CST).
 stringOps(t_stringOps_rev(RST)) -->  revString(RST).
-stringOps(t_stringOps_split(SST)) -->  splitString(SST).
 stringOps(t_stringOps_len(SLEN)) -->  stringLength(SLEN).
 
 concatString(t_concatStr(S1, S2)) --> [concat], expression(S1) , expression(S2).
