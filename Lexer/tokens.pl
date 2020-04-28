@@ -1,16 +1,15 @@
-#!/usr/local/bin/swipl 
+#!/usr/local/bin/swipl
 
-:- initialization (main,program).
+:-initialization(main,program).
 
 
-main :-
-    open('tokens.txt', read, Str),
-    read_file(Str,Lines),!,
+main(P) :-
+    open('/home/user/Projects/SER502-Spring2020-Team26-development/Lexer/tokens.txt', read, Str),
+    read_file(Str,Lines),
     close(Str),
     list_butlast(Lines,Tokens),
-    
     write(Tokens), nl,
-    pgr(P,Tokens,[]),
+    program(P,Tokens,[]),
 
     % insert the code here, lines is the list of tokens
 
@@ -38,7 +37,7 @@ read_file(Stream,[X|L]) :-
 %%%%%%%%%%%%%%%%%%%%%%% Program Section %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pgr(t_program(K)) --> block(K).
+program(t_program(K)) --> block(K).
 eval_program(t_program(K), Env, FinalEnv) :- eval_block(K, Env, FinalEnv).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -712,3 +711,4 @@ updateDict(ID,Key,Value,[H|T],[H|Env]):-  H \= (ID,_), updateDict(ID,Key,Value,T
 %Updates the element within the list
 updateDict([(Key,_)|T],Key,Value,[(Key,Value)|T]).
 updateDict([H|T],Key,Value,[H|L]):- H \= (Key,_), updateDict(T,Key,Value,L).
+
