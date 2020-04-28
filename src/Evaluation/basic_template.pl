@@ -596,8 +596,8 @@ decrement(t_decrement(I)) --> varIdentifier(I), [--].
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 eval_forLoop_inc(t_for(B, IN, CL), Env, NewEnv) :-
-    eval_boolean(B, Env, Env1, true), eval_increment(IN, Env1, Env2),
-    eval_commandList(CL, Env2, Env3), eval_forLoop_inc(t_for(B, IN, CL), Env3, NewEnv).
+    eval_boolean(B, Env, Env1, true), eval_commandList(CL, Env1, Env2), 
+    eval_increment(IN, Env2, Env3), eval_forLoop_inc(t_for(B, IN, CL), Env3, NewEnv).
 
 eval_forLoop_inc(t_for(B, _IN, _C), Env, Env) :- eval_boolean(B, Env, Env, false).
 
@@ -605,8 +605,8 @@ eval_increment(t_increment(Id), Env, NewEnv) :- lookup(Id, Env, Val),
     Val1 is Val + 1, update(Id, Val1, Env, NewEnv).
 
 eval_forLoop_dec(t_for(B, DE, CL), Env, NewEnv) :-
-    eval_boolean(B, Env, Env1, true), eval_decrement(DE, Env1, Env2),
-    eval_commandList(CL, Env2, Env3), eval_forLoop_dec(t_for(B, DE, CL), Env3, NewEnv).
+    eval_boolean(B, Env, Env1, true), eval_commandList(CL, Env1, Env2), 
+    eval_decrement(DE, Env2, Env3), eval_forLoop_dec(t_for(B, DE, CL), Env3, NewEnv).
 
 eval_forLoop_dec(t_for(B, _DE, _C), Env, Env) :- eval_boolean(B, Env, Env, false).
 
