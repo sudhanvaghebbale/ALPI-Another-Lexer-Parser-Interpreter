@@ -231,8 +231,6 @@ command(t_command_for_dec(I,E,B,DEC,CL)) --> [for], [ '(' ], value(I), [=],
 command(t_command_for_range(I,D1,D2,CL)) --> [for], value(I), [in], [range],  ['('],
     value(D1),  [','], value(D2),  [')'], ['{'], commandList(CL), ['}'].
 
-command(t_command_block(K)) --> block(K).
-
 command(t_command_stringOps(I,OP)) --> identifier(I), [=], stringOps(OP).
 
 command(t_command_increment(I)) --> increment(I).
@@ -293,8 +291,6 @@ eval_command(t_command_while(B, _C), Env, Env) :- eval_boolean(B, Env, Env, fals
 eval_command(t_command_print(P), Env, Env) :- eval_printStatement(P, Env, Env).
 
 eval_command(t_command_print_string(P), Env, Env) :- eval_printString(P, Env, Env).
-
-eval_command(t_command_block(K), Env, NewEnv) :- eval_block(K, Env, NewEnv).
 
 eval_command(t_command_func(FC), Env, NewEnv) :- eval_funCall(FC, Env, NewEnv).
 
@@ -545,12 +541,14 @@ functionDeclaration(t_funcDeclr(I, PL, DL, CL, E)) --> [func], identifier(I), ['
 
 parameterList(t_parList(P, PL)) --> parameter(P), [,], parameterList(PL).
 parameterList(t_parList(P)) --> parameter(P).
+parameterList(t_parList()) --> [].
 parameter(I) --> identifier(I).
 
 funCall(t_funCall(I, CPL)) --> value(I), ['('], callParameterList(CPL), [')'].
 callParameterList(t_callParList(CP, CPS)) -->
     callParameter(CP), [,], callParameterList(CPS).
 callParameterList(t_callParList(CP)) --> callParameter(CP).
+callParameterList(t_callParList()) --> [].
 callParameter(I) --> value(I).
 return(t_return(E)) --> [return], expression(E).
 
@@ -593,18 +591,22 @@ eval_callParList(t_callParList(P, PS), Env, Env, Val, Res) :-
 eval_callParList(t_callParList(P), Env, Env, Val, Result) :-
     eval_expression(P, Env, Env, Id), append(Val, Id, Result).
 
+eval_callParList(t_callParList(), Env, Env, Val, Val).
+
 eval_parList(t_parList(P, PS), Env, Env, Val, Res) :-
     eval_id(P, Id), append(Val, Id, Result), eval_parList(PS, Env, Env, [Result], Res).
 
 eval_parList(t_parList(P), Env, Env, Val, Result) :-
     eval_id(P, Id), append(Val, Id, Result).
 
-localScope(_, [[]], [[]], Env, Env).
+eval_parList(t_parList(), Env, Env, Val, Val).
+
+localScope(_, [], [], Env, Env).
+
+localScope(Id, H, H1, Env, NewEnv) :- updateAppend(Id, (H1, H), Env, NewEnv).
 
 localScope(Id, [H | T], [H1 | T1], Env, NewEnv) :- updateAppend(Id, (H1, H), Env, Env1),
-    localScope(Id, [T], [T1], Env1, NewEnv).
-
-localScope(Id, [H], [H1], Env, NewEnv) :- updateAppend(Id, (H1, H), Env, NewEnv).
+    localScope(Id, T, T1, Env1, NewEnv).
 
 eval_id(t_id(t_varID(X)), X).
 eval_id(t_varID(X), X).
