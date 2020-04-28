@@ -1,6 +1,6 @@
 #!/usr/local/bin/swipl
 
-:-initialization(main,program).
+:- initialization(main,program).
 
 
 main :-
@@ -113,12 +113,12 @@ stringOps(t_stringOps_rev(RST)) -->  revString(RST).
 stringOps(t_stringOps_split(SST)) -->  splitString(SST).
 stringOps(t_stringOps_len(SLEN)) -->  stringLength(SLEN).
 
-concatString(t_concatStr(S1, S2)) --> [concat], ['('], expression(S1) , expression(S2), [')'].
+concatString(t_concatStr(S1, S2)) --> [concat], expression(S1) , expression(S2).
 % concatString(t_concatStr(I1, I2)) --> [concat], ['('], identifier(I1),
 % identifier(I2), [')'].
-revString(t_revStr(S)) --> [rev], ['('], expression(S), [')'].
+revString(t_revStr(S)) --> [rev], expression(S).
 splitString(t_splitStr(S, D)) --> [split], ['('], expression(S), number(D), [')'].
-stringLength(t_strLen(S)) --> [len], ['('], expression(S), [')'].
+stringLength(t_strLen(S)) --> [len], expression(S).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -128,18 +128,18 @@ stringLength(t_strLen(S)) --> [len], ['('], expression(S), [')'].
 eval_string(t_string(S),Str):- eval_stringTerm(S,Str).
 eval_stringTerm(t_stringTerm(S),S).
 
-eval_stringOps(t_stringOps_concat(X),Val) :- eval_concatString(X,Val).
-eval_stringOps(t_stringOps_rev(X),Val) :- eval_revStr(X,Val).
-%eval_stringOps(t_stringOps_split(X),Val) :- eval_splitString
-eval_stringOps(t_stringOps_len(X),Val) :- eval_stringLength(X,Val).
+eval_stringOps(t_stringOps_concat(X),Env,Val) :- eval_concatString(X,Env,Val).
+eval_stringOps(t_stringOps_rev(X),Env,Val) :- eval_revStr(X,Env,Val).
+%eval_stringOps(t_stringOps_split(X),Env,Val) :- eval_splitString
+eval_stringOps(t_stringOps_len(X),Env,Val) :- eval_stringLength(X,Env,Val).
 
-eval_revStr(t_revStr(S), Ans) :- eval_expression(S,_,_,String), string_chars(String, List), rev(List, TempAns, []), string_chars(Ans, TempAns).
+eval_revStr(t_revStr(S),Env,Ans) :- eval_expression(S,Env,_,String), atom(String), atom_string(String,Str), string_chars(Str, List), rev(List, TempAns, []), string_chars(Ans, TempAns).
+eval_revStr(t_revStr(S),Env,Ans) :- eval_expression(S,Env,_,String), string_chars(String, List), rev(List, TempAns, []), string_chars(Ans, TempAns).
 rev([], Z, Z).
 rev([H|T],Z,Acc) :- rev(T,Z,[H|Acc]).
-
-
 %Concat String
-eval_concatString(t_concatStr(S1, S2), Ans) :- eval_expression(S1,_,_,String1), eval_expression(S2,_,_,String2), string_concat(String1, String2, Ans).
+eval_concatString(t_concatStr(S1, S2),Env,Ans) :- eval_expression(S1,Env,_,String1), atom(String1), atom_string(String1,Str1), eval_expression(S2,Env,_,String2), atom(String2), atom_string(String2,Str2), string_concat(Str1, Str2, Ans).
+eval_concatString(t_concatStr(S1, S2),Env,Ans) :- eval_expression(S1,Env,_,String1), eval_expression(S2,Env,_,String2), string_concat(String1, String2, Ans).
 
 
 %Split String
@@ -148,7 +148,8 @@ eval_concatString(t_concatStr(S1, S2), Ans) :- eval_expression(S1,_,_,String1), 
 
 
 %String Length
-eval_stringLength(t_strLen(S), Ans) :- eval_expression(S,_,_,String), string_length(String, Ans).
+eval_stringLength(t_strLen(S),Env,Ans) :- eval_expression(S,Env,_,String), atom(String), atom_string(String,Str), string_length(Str, Ans).
+eval_stringLength(t_strLen(S),Env,Ans) :- eval_expression(S,Env,_,String), string_length(String, Ans).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% Declaration Evaluation %%%%%%%%%%%%%%%%%%%%%
@@ -201,7 +202,8 @@ commandList(t_commandList(C))  --> command(C).
 
 command(t_command_assign_expr(I,E)) -->  identifier(I), [=], expression(E).
 command(t_command_assign_id(ID1,ID2)) -->  identifier(ID1), [=], identifier(ID2).
-command(t_command_assign_string(I,S)) -->  identifier(I), [=], string(S).
+% command(t_command_assign_string(I,S)) --> identifier(I), [=],
+% string(S).
 command(t_command_assign_bool(I,B)) -->  identifier(I), [=], boolean(B).
 command(t_command_ifte(B,CL1,CL2)) --> [if], ['('], boolean(B), [')'], ['{'],
     commandList(CL1), [ '}' ], [else], ['{'], commandList(CL2), ['}'].
@@ -254,8 +256,8 @@ eval_command(t_command_assign_expr(I, E), Env, NewEnv) :-
     eval_expression(E, Env, Env1, Val), eval_identifier_LHS(I,Env1,NewEnv,Val).
 
 % command(t_command_assign_string(I,S)) --> identifier(I),[=],string(S).
-eval_command(t_command_assign_string(I,S), Env, NewEnv) :-
-    eval_string(S,Val), eval_identifier_LHS(I,Env,NewEnv,Val).
+%eval_command(t_command_assign_string(I,S), Env, NewEnv) :-
+  %  eval_string(S,Val), eval_identifier_LHS(I,Env,NewEnv,Val).
 
 % command(t_command_assign_bool(I,B)) --> identifier(I),[=],boolean(B).
 eval_command(t_command_assign_bool(I,B), Env, NewEnv) :-
@@ -308,7 +310,7 @@ eval_command(t_command_for_range(I, D1, D2, CL), Env, NewEnv) :-
     eval_command(t_command_assign_expr(I, D1), Env, Env1),
     eval_forLoop_range(t_for_range(I, D1, D2, CL), Env1, NewEnv).
 
-eval_command(t_command_stringOps(I,OP),Env,NewEnv) :- eval_stringOps(OP,Val), eval_identifier_LHS(I,Env,NewEnv,Val).
+eval_command(t_command_stringOps(I,OP),Env,NewEnv) :- eval_stringOps(OP,Env,Val), eval_identifier_LHS(I,Env,NewEnv,Val).
 
 eval_command(t_command_increment(I),Env,NewEnv) :- eval_increment(I,Env,NewEnv).
 

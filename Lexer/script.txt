@@ -1,10 +1,11 @@
 begin
     dict dct = {" key1 " : " value1 ", " key2 " : " value2 ", " key3 " : " value3 "}
     list lst = [1, 2, 3, 4, 5, 6]
-    str s1 = " teststring "
+    str s1 = " ankit "
+    str s2 = " vutukuri "
     num sum = 0
     num avg
-    num i
+    num length
     for i in range(0, 6){
 	//print " i "
         lst[i]++
@@ -13,8 +14,10 @@ begin
 	sum = sum + lst[i]
     }
     avg = sum / 6
-    dct[" key2 "] = avg
-    lst[5] = s1
-    print " dct "
+    s3 = concat s1 s2
+    print " s3 "
+    s4 = rev s3
+    print " s4 "
+    print " avg "
     print " lst "
 end
