@@ -123,7 +123,7 @@ def isFloat(string):
 
 
 if __name__ =='__main__':
-    res_ =  Lexer('/Users/jubanjanmacbook/PycharmProjects/502_Project/SER502-Spring2020-Team26/Lexer/script.txt').tokenize()
+    res_ =  Lexer('C:\\ASU\\SER503\\SER502-Spring2020-Team26\\Lexer\\script.txt').tokenize()
     # check = ['begin', 'num', 'x', '=', '2', ';', 'num', 'r', ';', 'num', 'u', '=', '0', ';', 'num', 'z', ';', 'num', 'v', ';', 'str', 's', '=', '"', 'sudhanva', '"', ';', 'num', 'y', '=', '0', ';', 'for', 'i', 'in', 'range', '(', '1', ',' , '5', ')', '{', 'x', '=', 'x', '+', '1', ';', 'y', '=', 'y', '+', '1', '}', ';', 'while', '(', 'not', 'u', '==', '3', ')', '{', 'z', '=', 'x', '*', '2', ';', 'u', '=', 'u', '+', '1','}',';', 'if', '(', 'z', '>', 'x', ')', '{', 'v', '=', '1',';', '}', 'else', '{', 'v', '=', '0',';', '}', ';', 'x', '<', '3', '?', 'r', '=', '0', ':', 'r', '=' , '1', ';', 'end']
     ''' handle quotes'''
 

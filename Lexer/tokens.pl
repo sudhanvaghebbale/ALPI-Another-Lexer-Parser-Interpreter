@@ -3,14 +3,14 @@
 :-initialization(main,program).
 
 
-main(P) :-
-    open('/home/user/Projects/SER502-Spring2020-Team26-development/Lexer/tokens.txt', read, Str),
-    read_file(Str,Lines),
+main :-
+    open('C:\\ASU\\SER503\\SER502-Spring2020-Team26\\Lexer\\tokens.txt', read, Str),
+    read_file(Str,Lines),!,
     close(Str),
     list_butlast(Lines,Tokens),
-    write(Tokens), nl,
+    writeq(Tokens), nl,
     program(P,Tokens,[]),
-
+    eval_program(P,[],_),
     % insert the code here, lines is the list of tokens
 
     halt.
@@ -62,6 +62,7 @@ identifier(t_varID(I)) --> varIdentifier(I).
 %identifier(t_listIdentifier(L)) --> listIdentifier(L).
 %identifier(t_dictionaryIdentifier(D)) --> dictionaryIdentifier(D).
 identifier(t_listID(I, D)) --> varIdentifier(I), [ '[' ], number(D), [ ']' ].
+identifier(t_listID_identifier(I, D)) --> varIdentifier(I), ['['], varIdentifier(D), [']'].
 identifier(t_dictID(I,S)) --> varIdentifier(I), ['['], string(S), [']'].
 varIdentifier(I) -->  [I], {atom(I)}.
 
@@ -72,11 +73,13 @@ varIdentifier(I) -->  [I], {atom(I)}.
 eval_identifier_LHS(t_id(t_varID(Id)),Env,NewEnv,Val):- update(Id,Val,Env,NewEnv).
 eval_identifier_LHS(t_varID(Id),Env,NewEnv,Val):- update(Id,Val,Env,NewEnv).
 eval_identifier_LHS(t_listID(Id,Pos),Env,NewEnv,Val):- updateList(Id,Pos,Val,Env,NewEnv).
+eval_identifier_LHS(t_listID_identifier(Id1,Id2),Env,NewEnv,Val):- lookup(Id2,Env,Pos), updateList(Id1,Pos,Val,Env,NewEnv).
 eval_identifier_LHS(t_dictID(Id,Key),Env,NewEnv,Val):- eval_string(Key,Key1), updateDict(Id,Key1,Val,Env,NewEnv).
 
 eval_identifier_RHS(t_varID(Id),Env,Val):- lookup(Id,Env,Val).
 eval_identifier_RHS(t_listID(Id,Pos),Env,Val):- lookupList(Id,Pos,Env,Val).
-eval_identifier_RHS(t_listID(Id,S),Env,Val):- eval_string(S,Key), lookupDict(Id,Key,Env,Val).
+eval_identifier_RHS(t_listID_identifier(Id1,Id2),Env,Val):- lookup(Id2,Env,Pos), lookupList(Id1,Pos,Env,Val).
+eval_identifier_RHS(t_dictID(Id,S),Env,Val):- eval_string(S,Key), lookupDict(Id,Key,Env,Val).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -99,9 +102,9 @@ dataType --> [num] ; [str] ; [bool] ; [list] ; [dict].
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% String Grammar %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Only single quote strings allowed.
-%string(t_string(S)) --> ['"'], stringTerm(S), ['"'].
-string(t_string(S)) --> ['\''], stringTerm(S), ['\''].
+%Only double quote strings allowed.
+string(t_string(S)) --> ['"'], stringTerm(S), ['"'].
+%string(t_string(S)) --> ['\''], stringTerm(S), ['\''].
 stringTerm(t_stringTerm(S)) --> [S], {atom(S)}.
 stringTerm(t_stringTerm()) --> [].
 
@@ -227,6 +230,9 @@ command(t_command_block(K)) --> block(K).
 
 command(t_command_stringOps(I,OP)) --> identifier(I), [=], stringOps(OP).
 
+command(t_command_increment(I)) --> increment(I).
+
+command(t_command_increment(I)) --> decrement(I).
 /*
 command(t_command_assignlist(I,L)) --> identifier(I),  [=],  list(L).
 command(t_command_assigndict(I,D)) --> identifier(I), [=], dictionary(D).
@@ -303,6 +309,10 @@ eval_command(t_command_for_range(I, D1, D2, CL), Env, NewEnv) :-
     eval_forLoop_range(t_for_range(I, D1, D2, CL), Env1, NewEnv).
 
 eval_command(t_command_stringOps(I,OP),Env,NewEnv) :- eval_stringOps(OP,Val), eval_identifier_LHS(I,Env,NewEnv,Val).
+
+eval_command(t_command_increment(I),Env,NewEnv) :- eval_increment(I,Env,NewEnv).
+
+eval_command(t_command_decrement(I),Env,NewEnv) :- eval_decrement(I,Env,NewEnv).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%% Boolean Grammar %%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -586,8 +596,8 @@ eval_printStatement(t_print_var(P), Env, Env) :- eval_id(P, Id),
 %%%%%%%%%%%%%%%%%%%%%%% For Loop Grammar %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-increment(t_increment(I)) --> varIdentifier(I), [++].
-decrement(t_decrement(I)) --> varIdentifier(I), [--].
+increment(t_increment(I)) --> identifier(I), [++].
+decrement(t_decrement(I)) --> identifier(I), [--].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%% For Loop Evaluation %%%%%%%%%%%%%%%%%%%%%%
@@ -599,8 +609,8 @@ eval_forLoop_inc(t_for(B, IN, CL), Env, NewEnv) :-
 
 eval_forLoop_inc(t_for(B, _IN, _C), Env, Env) :- eval_boolean(B, Env, Env, false).
 
-eval_increment(t_increment(Id), Env, NewEnv) :- lookup(Id, Env, Val),
-    Val1 is Val + 1, update(Id, Val1, Env, NewEnv).
+eval_increment(t_increment(Id), Env, NewEnv) :- eval_identifier_RHS(Id,Env,Val),
+    Val1 is Val + 1, eval_identifier_LHS(Id,Env,NewEnv,Val1).
 
 eval_forLoop_dec(t_for(B, DE, CL), Env, NewEnv) :-
     eval_boolean(B, Env, Env1, true), eval_decrement(DE, Env1, Env2),
@@ -608,8 +618,8 @@ eval_forLoop_dec(t_for(B, DE, CL), Env, NewEnv) :-
 
 eval_forLoop_dec(t_for(B, _DE, _C), Env, Env) :- eval_boolean(B, Env, Env, false).
 
-eval_decrement(t_decrement(Id), Env, NewEnv) :- lookup(Id, Env, Val),
-    Val1 is Val - 1, update(Id, Val1, Env, NewEnv).
+eval_decrement(t_decrement(Id), Env, NewEnv) :- eval_identifier_RHS(Id,Env,Val),
+    Val1 is Val - 1, eval_identifier_LHS(Id,Env,NewEnv,Val1).
 
 eval_forLoop_range(t_for_range(I, D1, D2, CL), Env, NewEnv) :-
     eval_boolean(t_boolean_lt(I, D2), Env, Env1, true),
@@ -623,11 +633,11 @@ eval_forLoop_range(t_for_range(I, _D1, D2, _CL), Env, NewEnv) :-
 %%%%%%%%%%%%%%%%%%%%%%% Lists Grammar %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-list(t_list(IL)) --> [ '[' ], identifierList(IL), [ ']' ].
+list(t_list(IL)) --> ['['], identifierList(IL), [']'].
 identifierList(t_idList(LV,ELE)) --> listValues(LV), element(ELE).
 identifierList(t_idList()) --> [].
 %Added comma between elements
-listValues(t_listVal(ELE, LV)) --> element(ELE), [,], listValues(LV).
+listValues(t_listVal(ELE, LV)) --> element(ELE), [','], listValues(LV).
 listValues(t_listVal()) --> [].
 element(t_element_expr(E))  --> expression(E).
 element(t_element_string(S))  --> string(S).
@@ -673,7 +683,7 @@ updateList([_|T],0,Val,[Val|T]).
 dictionary(t_dictionary(DI)) --> ['{'], dictionaryItems(DI), ['}'].
 dictionaryItems(t_dictItems(DV, DE)) --> dictionaryValues(DV), dictionaryElement(DE).
 dictionaryItems(t_dictItems()) --> [].
-dictionaryValues(t_dictValues(DE, DV)) --> dictionaryElement(DE), [,], dictionaryValues(DV).
+dictionaryValues(t_dictValues(DE, DV)) --> dictionaryElement(DE), [','], dictionaryValues(DV).
 dictionaryValues(t_dictValues()) --> [].
 dictionaryElement(t_dictElement(S, DV)) --> string(S), [:], dictionaryValue(DV).
 dictionaryValue(t_dictVal_expr(E)) --> expression(E).
