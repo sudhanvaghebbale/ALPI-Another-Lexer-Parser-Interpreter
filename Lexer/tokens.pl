@@ -211,7 +211,8 @@ command(t_command_ifte(B,CL1,CL2)) --> [if], ['('], boolean(B), [')'], ['{'],
 command(t_command_while(B,CL)) --> [while], ['('], boolean(B), [')'], ['{'],
     commandList(CL), ['}'].
 
-command(t_command_print(P)) --> [print], ['"'], printStatement(P), ['"'].
+command(t_command_print(P)) --> [print], printStatement(P).
+command(t_command_print_string(P)) --> [print], ['"'], printStrings(P), ['"'].
 
 command(t_command_func(FC)) --> funCall(FC).
 command(t_command_funcReturn(I,FC)) --> identifier(I), [=], funCall(FC).
@@ -290,6 +291,8 @@ eval_command(t_command_while(B, _C), Env, Env) :- eval_boolean(B, Env, Env, fals
 
 eval_command(t_command_print(P), Env, Env) :- eval_printStatement(P, Env, Env).
 
+eval_command(t_command_print_string(P), Env, Env) :- eval_printString(P, Env, Env).
+
 eval_command(t_command_block(K), Env, NewEnv) :- eval_block(K, Env, NewEnv).
 
 eval_command(t_command_func(FC), Env, NewEnv) :- eval_funCall(FC, Env, NewEnv).
@@ -307,20 +310,24 @@ eval_command(t_command_for_inc(I,E,B,IN,CL), Env, NewEnv) :-
     eval_command(t_command_assign_expr(I, E), Env, Env1),
     eval_forLoop_inc(t_for(B, IN, CL), Env1, NewEnv).
 
-eval_command(t_command_for_dec(I,E,B,DE,CL), Env, NewEnv) :-
-    eval_command(t_command_assign_expr(I, E), Env, Env1),
-    eval_forLoop_dec(t_for(B, DE, CL), Env1, NewEnv).
+eval_command(t_command_for_dec(I,E,B,DE,CL), Env, NewEnv) :- eval_expression(E, Env, Env1, Val), 
+    check_number(Val), eval_command(t_command_assign_expr(I, E), Env1, Env2),
+    eval_forLoop_dec(t_for(B, DE, CL), Env2, NewEnv).
 
-eval_command(t_command_for_range(I, D1, D2, CL), Env, NewEnv) :-
+eval_command(t_command_for_range(I, D1, D2, CL), Env, NewEnv) :- 
     eval_command(t_command_assign_expr(I, D1), Env, Env1),
     eval_forLoop_range(t_for_range(I, D1, D2, CL), Env1, NewEnv).
 
 eval_command(t_command_stringOps(I,OP),Env,NewEnv) :- 
-    eval_stringOps(OP,Val), eval_identifier_LHS(I,Env,NewEnv,Val).
+    eval_stringOps(OP,Env, Val), eval_identifier_LHS(I,Env,NewEnv,Val).
 
 eval_command(t_command_increment(I),Env,NewEnv) :- eval_increment(I,Env,NewEnv).
 
 eval_command(t_command_decrement(I),Env,NewEnv) :- eval_decrement(I,Env,NewEnv).
+
+check_number(Val) :- number(Val), !.
+check_number(Val) :- not(number(Val)), 
+    print_message(error, format('~a has to be an integer', [Val])).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%% Boolean Grammar %%%%%%%%%%%%%%%%%%%%%%
@@ -511,7 +518,6 @@ check_numbers(Val1, Val2) :-
 lookup(Id, [], _) :-
     write("Error: "), write(Id), writeln(" does not exist!"), fail.
 */
-
 lookup(Id, [(Id, Val) | _], Val).
 lookup(Id, [_ | T], Val) :- lookup(Id, T, Val).
 
@@ -614,15 +620,25 @@ find_length([_H | T], Length) :- find_length(T, Val), Length is Val + 1.
 printStatement(t_print_var(I, PS)) --> identifier(I), [','], printStatement(PS).
 printStatement(t_print_var(I)) --> identifier(I).
 
+printStrings(t_print_string(I, PS)) --> printString(I), [','], printStrings(PS).
+printStrings(t_print_string(I)) --> printString(I).
+printString(S) --> [S], { atom(S) }.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% Print Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 eval_printStatement(t_print_var(P, PS), Env, Env) :- eval_id(P, Id), eval_identifier_RHS(P, Env, Val),
-    print_message(debug, format('~a = ~a', [Id, Val])), eval_printStatement(PS, Env, Env), !.
+    print_message(debug, format('~a = ~a', [Id, Val])), eval_printStatement(PS, Env, Env).
 
 eval_printStatement(t_print_var(P), Env, Env) :- eval_id(P, Id), eval_identifier_RHS(P, Env, Val),
-    print_message(debug, format('~a = ~a', [Id, Val])), !.
+    print_message(debug, format('~a = ~a', [Id, Val])).
+
+eval_printString(t_print_string(P, PS), Env, Env) :-
+    print_message(debug, format('~a', [P])), eval_printString(PS, Env, Env).
+
+eval_printString(t_print_string(P), Env, Env) :-
+    print_message(debug, format('~a', [P])).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% For Loop Grammar %%%%%%%%%%%%%%%%%%%%%%%%
