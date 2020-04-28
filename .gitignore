@@ -1,2 +1,4 @@
 
 *.pl~
+Lexer/script.txt
+Lexer/tokens.txt

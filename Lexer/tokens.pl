@@ -59,8 +59,6 @@ eval_funcBlock(t_funcBlock(D, C), Env, NewEnv) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 identifier(t_varID(I)) --> varIdentifier(I).
-%identifier(t_listIdentifier(L)) --> listIdentifier(L).
-%identifier(t_dictionaryIdentifier(D)) --> dictionaryIdentifier(D).
 identifier(t_listID(I, D)) --> varIdentifier(I), [ '[' ], number(D), [ ']' ].
 identifier(t_listID_identifier(I, D)) --> varIdentifier(I), ['['], varIdentifier(D), [']'].
 identifier(t_dictID(I,S)) --> varIdentifier(I), ['['], string(S), [']'].
@@ -102,9 +100,8 @@ dataType --> [num] ; [str] ; [bool] ; [list] ; [dict].
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% String Grammar %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Only double quote strings allowed.
+
 string(t_string(S)) --> ['"'], stringTerm(S), ['"'].
-%string(t_string(S)) --> ['\''], stringTerm(S), ['\''].
 stringTerm(t_stringTerm(S)) --> [S], {atom(S)}.
 stringTerm(t_stringTerm()) --> [].
 
@@ -114,10 +111,7 @@ stringOps(t_stringOps_split(SST)) -->  splitString(SST).
 stringOps(t_stringOps_len(SLEN)) -->  stringLength(SLEN).
 
 concatString(t_concatStr(S1, S2)) --> [concat], expression(S1) , expression(S2).
-% concatString(t_concatStr(I1, I2)) --> [concat], ['('], identifier(I1),
-% identifier(I2), [')'].
 revString(t_revStr(S)) --> [rev], expression(S).
-splitString(t_splitStr(S, D)) --> [split], ['('], expression(S), number(D), [')'].
 stringLength(t_strLen(S)) --> [len], expression(S).
 
 
@@ -130,7 +124,6 @@ eval_stringTerm(t_stringTerm(S),S).
 
 eval_stringOps(t_stringOps_concat(X),Env,Val) :- eval_concatString(X,Env,Val).
 eval_stringOps(t_stringOps_rev(X),Env,Val) :- eval_revStr(X,Env,Val).
-%eval_stringOps(t_stringOps_split(X),Env,Val) :- eval_splitString
 eval_stringOps(t_stringOps_len(X),Env,Val) :- eval_stringLength(X,Env,Val).
 
 eval_revStr(t_revStr(S),Env,Ans) :- eval_expression(S,Env,_,String), atom(String), atom_string(String,Str), string_chars(Str, List), rev(List, TempAns, []), string_chars(Ans, TempAns).
@@ -142,10 +135,6 @@ rev([H|T],Z,Acc) :- rev(T,Z,[H|Acc]).
 eval_concatString(t_concatStr(S1, S2),Env,Ans) :- eval_expression(S1,Env,_,String1), atom(String1), atom_string(String1,Str1), eval_expression(S2,Env,_,String2), atom(String2), atom_string(String2,Str2), string_concat(Str1, Str2, Ans).
 eval_concatString(t_concatStr(S1, S2),Env,Ans) :- eval_expression(S1,Env,_,String1), eval_expression(S2,Env,_,String2), string_concat(String1, String2, Ans).
 
-
-%Split String
-% eval_splitString(String, SepChars, PadChars, SubStrings) :-
-% split_string(String, SepChars, PadChars, SubStrings).
 
 
 %String Length
@@ -451,9 +440,6 @@ value(t_brackets(X)) --> ['('], expression(X), [')'].
 value(t_num(X)) --> number(X).
 value(t_id(X)) --> identifier(X).
 value(t_expr_string(X)) --> string(X).
-% value(t_id(I)) --> [I], {atom(I)}.
-% value(t_listID(L)) --> listIdentifier(L).
-% value(t_dictionaryID(D)) --> dictionaryIdentifier(D).
 number(X) --> [X], {number(X)}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -618,6 +604,10 @@ localScope(Id, [H | T], [H1 | T1], Env, NewEnv) :- updateAppend(Id, (H1, H), Env
 % To get from the environment
 eval_id(t_id(t_varID(X)), X).
 eval_id(t_varID(X), X).
+eval_id(t_listID(_,_), list_value).
+eval_id(t_listID_identifier(_,_), list_value).
+eval_id(t_dictID(_,_), dictionary_value).
+
 
 % To find the length of parameter list.
 find_length([], 0).
@@ -708,7 +698,6 @@ identifierList(t_idList()) --> [].
 listValues(t_listVal(ELE, LV)) --> element(ELE), [,], listValues(LV).
 listValues(t_listVal()) --> [].
 element(t_element_expr(E))  --> expression(E).
-%element(t_element_string(S))  --> string(S).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% Lists Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
@@ -720,7 +709,6 @@ eval_identifierList(t_idList(),_,Env,Env).
 eval_listValues(t_listVal(ELE,LV),ID,Env,Env2):- eval_element(ELE,ID,Env,Env1), eval_listValues(LV,ID,Env1,Env2).
 eval_listValues(t_listVal(),_,Env,Env).
 eval_element(t_element_expr(X),ID,Env,Env2):- eval_expression(X,Env,Env1,Val), initializeList(ID,Val,Env1,Env2).
-%eval_element(t_element_string(X),ID,Env,Env2):- eval_string(X,S), initializeList(ID,S,Env,Env2).
 
 %Initializes the list
 initializeList(ID,X,[],[(ID,[X])]).
@@ -755,7 +743,6 @@ dictionaryValues(t_dictValues(DE, DV)) --> dictionaryElement(DE), [,], dictionar
 dictionaryValues(t_dictValues()) --> [].
 dictionaryElement(t_dictElement(S, DV)) --> string(S), [:], dictionaryValue(DV).
 dictionaryValue(t_dictVal_expr(E)) --> expression(E).
-%dictionaryValue(t_dictVal_string(S)) --> string(S).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% Dictionary Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
@@ -768,7 +755,6 @@ eval_dictionaryValues(t_dictValues(DE,DV),ID,Env,Env2):- eval_dictionaryElement(
 eval_dictionaryValues(t_dictValues(),_,Env,Env).
 eval_dictionaryElement(t_dictElement(S,DV),ID,Env,Env1):- eval_string(S,Key), eval_dictionaryValue(DV,Value), initializeDict(ID,Key,Value,Env,Env1).
 eval_dictionaryValue(t_dictVal_expr(E),Val):- eval_expression(E,_,_,Val).
-%eval_dictionaryValue(t_dictVal_string(S),Value):- eval_string(S,Value).
 
 initializeDict(ID,Key,Value,[],[(ID,[(Key,Value)])]).
 initializeDict(ID,Key,Value,[(ID,T)|TL],[(ID,L)|TL]):- append(T,[(Key,Value)],L).
