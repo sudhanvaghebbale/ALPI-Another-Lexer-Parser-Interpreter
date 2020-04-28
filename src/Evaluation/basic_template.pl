@@ -411,27 +411,27 @@ eval_expression(t_command_assign(Id, E), Env, NewEnv, Val1) :-
 
 % E -> E + E
 eval_expression(t_add(X,Y), Env, NewEnv, Val) :-
-    eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2),
+    eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2), 
     Val is Val1 + Val2.
 
 % E -> E - E
 eval_expression(t_subr(X,Y), Env, NewEnv, Val) :-
-    eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2),
-    Val is Val1 - Val2.
+    eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2), 
+    check_numbers(Val1, Val2), Val is Val1 - Val2.
 
 % E -> E * E
 eval_expression(t_mult(X,Y), Env, NewEnv, Val) :-
     eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2),
-    Val is Val1 * Val2.
+    check_numbers(Val1, Val2), Val is Val1 * Val2.
 
 % E -> E / E
 eval_expression(t_div(X,Y), Env, NewEnv, Val) :-
     eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2),
-    Val is Val1 / Val2.
+    check_numbers(Val1, Val2), Val is Val1 / Val2.
 
 eval_expression(t_mod(X,Y), Env, NewEnv, Val) :-
     eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2),
-    Val is mod(Val1, Val2).
+    check_numbers(Val1, Val2), Val is mod(Val1, Val2).
 
 % E -> (E)
 eval_expression(t_brackets(X), Env, NewEnv, Val) :- eval_expression(X, Env, NewEnv, Val).
@@ -442,6 +442,11 @@ eval_expression(t_num(X), Env, Env, X).
 eval_expression(t_id(X),Env,Env,Val):- eval_identifier_RHS(X,Env,Val).
 
 eval_expression(t_expr_string(X),Env,Env,Val):- eval_string(X,Val).
+
+check_numbers(Val1, Val2) :- number(Val1), number(Val2).
+check_numbers(Val1, Val2) :- 
+    print_message(error, format('Illegal operation between ~d and ~s.', [Val1, Val2])), fail.
+
 % To extract id from the tree node
 % Moved to identifier section
 % eval_id(t_id(I), I).
@@ -451,6 +456,11 @@ eval_expression(t_expr_string(X),Env,Env,Val):- eval_string(X,Val).
 % eval_string(t_stringTerm(S), Env, Env, S).
 
 % To find the value of the variable in the particular environment.
+/*
+lookup(Id, [], _) :-
+    write("Error: "), write(Id), writeln(" does not exist!"), fail.
+*/
+
 lookup(Id, [(Id, Val) | _], Val).
 lookup(Id, [_ | T], Val) :- lookup(Id, T, Val).
 
@@ -504,11 +514,20 @@ eval_funCall(t_funCall(I, CPL), Env, Env, Val) :- eval_id(I, Id),  lookup(Id, En
     eval_parameters(I, CPL, P, Env, Env1), lookup(Id, Env1, [P, K, R | T]), eval_funcBlock(K, T, Env2),
     eval_return(R, Env2, _Env3, Val), !.
 
+eval_funCall(t_funCall(I, _CPL), Env, Env, _Val) :- eval_id(I, Id),
+    print_message(error, format('Function "~s" does not exist!', [Id])), fail.
+
 eval_return(t_return(E), Env, NewEnv, Val) :- eval_expression(E, Env, NewEnv, Val).
 
 eval_parameters(I, CPL, P, Env, NewEnv) :-
     eval_id(I, Id), eval_callParList(CPL, Env, Env1, [], ComPar), eval_parList(P, Env1, Env2, [], Par),
     localScope(Id, ComPar, Par, Env2, NewEnv).
+
+eval_parameters(I, CPL, P, Env, Env2) :-
+    eval_id(I, Id), eval_callParList(CPL, Env, Env1, [], ComPar), eval_parList(P, Env1, Env2, [], Par),
+    find_length(ComPar, Val1), find_length(Par, Val2), Val1 =\= Val2,
+    print_message(error, format('Parameters passed to function "~s" do not match with its definition!', [Id])), 
+    fail.
 
 eval_callParList(t_callParList(P, PS), Env, Env, Val, Res) :-
     eval_expression(P, Env, Env, Id), append(Val, Id, Result), eval_callParList(PS, Env, Env, [Result], Res).
@@ -531,6 +550,11 @@ localScope(Id, [H], [H1], Env, NewEnv) :- updateAppend(Id, (H1, H), Env, NewEnv)
 
 eval_id(t_id(t_varID(X)), X).
 eval_id(t_varID(X), X).
+
+
+find_length([], 0).
+find_length(_X, 1).
+find_length([_H | T], Length) :- find_length(T, Val), Length is Val + 1.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%% Print Grammar %%%%%%%%%%%%%%%%%%%%%%%%%
