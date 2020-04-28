@@ -516,13 +516,12 @@ lookup(Id, [], _) :-
     write("Error: "), write(Id), writeln(" does not exist!"), fail.
 */
 
+% To return true or false based on the presence of the term. 
 check_lookup(_, [], false).
 check_lookup(Id, [(Id, _) | _], true).
 check_lookup(Id, [_ | T], Val) :- lookup(Id, T, Val).
 
-lookup(Id, [(Id, Val) | _], Val).
-lookup(Id, [_ | T], Val) :- lookup(Id, T, Val).
-
+% To lookup the value of a variable in a particular environment.
 lookup(Id, [(Id, Val) | _], Val).
 lookup(Id, [_ | T], Val) :- lookup(Id, T, Val).
 
@@ -532,6 +531,7 @@ update(Id, Val, [(Id, _) | T], [(Id, Val) | T]).
 update(Id, Val, [H | T], [H | R]) :-
     H \= (Id, _), update(Id, Val, T, R).
 
+% To 
 updateAppend(Id, Val, [], [(Id, Val)]).
 updateAppend(Id, Val, [(Id, Prev) | T], [(Id, Result) | T]) :- append(Prev, [Val], Result).
 updateAppend(Id, Val, [H | T], [H | R]) :-
@@ -652,12 +652,14 @@ printString(S) --> [S], { atom(S) }.
 %%%%%%%%%%%%%%%%%%%%%%% Print Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Print value of variables
 eval_printStatement(t_print_var(P, PS), Env, Env) :- eval_id(P, Id), eval_identifier_RHS(P, Env, Val),
     print_message(debug, format('~w = ~w', [Id, Val])), eval_printStatement(PS, Env, Env).
 
 eval_printStatement(t_print_var(P), Env, Env) :- eval_id(P, Id), eval_identifier_RHS(P, Env, Val),
     print_message(debug, format('~w = ~w', [Id, Val])).
 
+% Print strings on the result screen.
 eval_printString(t_print_string(P, PS), Env, Env) :-
     print_message(debug, format('~w', [P])), eval_printString(PS, Env, Env).
 
@@ -675,29 +677,37 @@ decrement(t_decrement(I)) --> identifier(I), [--].
 %%%%%%%%%%%%%%%%%%%%%% For Loop Evaluation %%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Incrementing for loop
 eval_forLoop_inc(t_for(B, IN, CL), Env, NewEnv) :-
     eval_boolean(B, Env, Env1, true), eval_commandList(CL, Env1, Env2), 
     eval_increment(IN, Env2, Env3), eval_forLoop_inc(t_for(B, IN, CL), Env3, NewEnv).
 
+% To return current environment when boolean fails.
 eval_forLoop_inc(t_for(B, _IN, _C), Env, Env) :- eval_boolean(B, Env, Env, false).
 
+% To increment the value of an identifier
 eval_increment(t_increment(Id), Env, NewEnv) :- eval_identifier_RHS(Id,Env,Val),
     Val1 is Val + 1, eval_identifier_LHS(Id,Env,NewEnv,Val1).
 
+% Incrementing for loop
 eval_forLoop_dec(t_for(B, DE, CL), Env, NewEnv) :-
     eval_boolean(B, Env, Env1, true), eval_commandList(CL, Env1, Env2), 
     eval_decrement(DE, Env2, Env3), eval_forLoop_dec(t_for(B, DE, CL), Env3, NewEnv).
 
+% To return current environment when boolean fails.
 eval_forLoop_dec(t_for(B, _DE, _C), Env, Env) :- eval_boolean(B, Env, Env, false).
 
+% To decrement the value of an identifier
 eval_decrement(t_decrement(Id), Env, NewEnv) :- eval_identifier_RHS(Id,Env,Val),
     Val1 is Val - 1, eval_identifier_LHS(Id,Env,NewEnv,Val1).
 
+% Range Loop
 eval_forLoop_range(t_for_range(I, D1, D2, CL), Env, NewEnv) :-
     eval_boolean(t_boolean_lt(I, D2), Env, Env1, true),
     eval_commandList(CL, Env1, Env2), eval_expression(I, Env2, Env2, Val), Val1 is Val + 1,
     eval_identifier_LHS(I, Env2, Env3, Val1), eval_forLoop_range(t_for_range(I, D1, D2, CL), Env3, NewEnv).
 
+% To return current environment when boolean fails.
 eval_forLoop_range(t_for_range(I, _D1, D2, _CL), Env, NewEnv) :-
     eval_boolean(t_boolean_lt(I, D2), Env, Env, false), eval_identifier_LHS(I, Env, NewEnv, 0).
 
