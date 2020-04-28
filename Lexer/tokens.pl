@@ -137,6 +137,7 @@ eval_revStr(t_revStr(S),Env,Ans) :- eval_expression(S,Env,_,String), atom(String
 eval_revStr(t_revStr(S),Env,Ans) :- eval_expression(S,Env,_,String), string_chars(String, List), rev(List, TempAns, []), string_chars(Ans, TempAns).
 rev([], Z, Z).
 rev([H|T],Z,Acc) :- rev(T,Z,[H|Acc]).
+
 %Concat String
 eval_concatString(t_concatStr(S1, S2),Env,Ans) :- eval_expression(S1,Env,_,String1), atom(String1), atom_string(String1,Str1), eval_expression(S2,Env,_,String2), atom(String2), atom_string(String2,Str2), string_concat(Str1, Str2, Ans).
 eval_concatString(t_concatStr(S1, S2),Env,Ans) :- eval_expression(S1,Env,_,String1), eval_expression(S2,Env,_,String2), string_concat(String1, String2, Ans).
@@ -202,7 +203,7 @@ commandList(t_commandList(C))  --> command(C).
 
 command(t_command_assign_expr(I,E)) -->  identifier(I), [=], expression(E).
 command(t_command_assign_id(ID1,ID2)) -->  identifier(ID1), [=], identifier(ID2).
-command(t_command_assign_string(I,S)) -->  identifier(I), [=], string(S).
+%command(t_command_assign_string(I,S)) -->  identifier(I), [=], string(S).
 command(t_command_assign_bool(I,B)) -->  identifier(I), [=], boolean(B).
 command(t_command_if(B,CL1)) --> [if], ['('], boolean(B), [')'], ['{'],
     commandList(CL1), [ '}' ].
@@ -255,8 +256,8 @@ eval_command(t_command_assign_expr(I, E), Env, NewEnv) :-
     eval_expression(E, Env, Env1, Val), eval_identifier_LHS(I,Env1,NewEnv,Val).
 
 % command(t_command_assign_string(I,S)) --> identifier(I),[=],string(S).
-eval_command(t_command_assign_string(I,S), Env, NewEnv) :-
-    eval_string(S,Val), eval_identifier_LHS(I,Env,NewEnv,Val).
+%eval_command(t_command_assign_string(I,S), Env, NewEnv) :-
+    %eval_string(S,Val), eval_identifier_LHS(I,Env,NewEnv,Val).
 
 % command(t_command_assign_bool(I,B)) --> identifier(I),[=],boolean(B).
 eval_command(t_command_assign_bool(I,B), Env, NewEnv) :-
@@ -644,8 +645,8 @@ eval_printString(t_print_string(P), Env, Env) :-
 %%%%%%%%%%%%%%%%%%%%%%% For Loop Grammar %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-increment(t_increment(I)) --> varIdentifier(I), [++].
-decrement(t_decrement(I)) --> varIdentifier(I), [--].
+increment(t_increment(I)) --> identifier(I), [++].
+decrement(t_decrement(I)) --> identifier(I), [--].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%% For Loop Evaluation %%%%%%%%%%%%%%%%%%%%%%
@@ -657,8 +658,8 @@ eval_forLoop_inc(t_for(B, IN, CL), Env, NewEnv) :-
 
 eval_forLoop_inc(t_for(B, _IN, _C), Env, Env) :- eval_boolean(B, Env, Env, false).
 
-eval_increment(t_increment(Id), Env, NewEnv) :- lookup(Id, Env, Val),
-    Val1 is Val + 1, update(Id, Val1, Env, NewEnv).
+eval_increment(t_increment(Id), Env, NewEnv) :- eval_identifier_RHS(Id,Env,Val),
+    Val1 is Val + 1, eval_identifier_LHS(Id,Env,NewEnv,Val1).
 
 eval_forLoop_dec(t_for(B, DE, CL), Env, NewEnv) :-
     eval_boolean(B, Env, Env1, true), eval_commandList(CL, Env1, Env2), 
@@ -666,8 +667,8 @@ eval_forLoop_dec(t_for(B, DE, CL), Env, NewEnv) :-
 
 eval_forLoop_dec(t_for(B, _DE, _C), Env, Env) :- eval_boolean(B, Env, Env, false).
 
-eval_decrement(t_decrement(Id), Env, NewEnv) :- lookup(Id, Env, Val),
-    Val1 is Val - 1, update(Id, Val1, Env, NewEnv).
+eval_decrement(t_decrement(Id), Env, NewEnv) :- eval_identifier_RHS(Id,Env,Val),
+    Val1 is Val - 1, eval_identifier_LHS(Id,Env,NewEnv,Val1).
 
 eval_forLoop_range(t_for_range(I, D1, D2, CL), Env, NewEnv) :-
     eval_boolean(t_boolean_lt(I, D2), Env, Env1, true),
@@ -688,7 +689,7 @@ identifierList(t_idList()) --> [].
 listValues(t_listVal(ELE, LV)) --> element(ELE), [,], listValues(LV).
 listValues(t_listVal()) --> [].
 element(t_element_expr(E))  --> expression(E).
-element(t_element_string(S))  --> string(S).
+%element(t_element_string(S))  --> string(S).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% Lists Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
@@ -700,7 +701,7 @@ eval_identifierList(t_idList(),_,Env,Env).
 eval_listValues(t_listVal(ELE,LV),ID,Env,Env2):- eval_element(ELE,ID,Env,Env1), eval_listValues(LV,ID,Env1,Env2).
 eval_listValues(t_listVal(),_,Env,Env).
 eval_element(t_element_expr(X),ID,Env,Env2):- eval_expression(X,Env,Env1,Val), initializeList(ID,Val,Env1,Env2).
-eval_element(t_element_string(X),ID,Env,Env2):- eval_string(X,S), initializeList(ID,S,Env,Env2).
+%eval_element(t_element_string(X),ID,Env,Env2):- eval_string(X,S), initializeList(ID,S,Env,Env2).
 
 %Initializes the list
 initializeList(ID,X,[],[(ID,[X])]).
@@ -735,7 +736,7 @@ dictionaryValues(t_dictValues(DE, DV)) --> dictionaryElement(DE), [,], dictionar
 dictionaryValues(t_dictValues()) --> [].
 dictionaryElement(t_dictElement(S, DV)) --> string(S), [:], dictionaryValue(DV).
 dictionaryValue(t_dictVal_expr(E)) --> expression(E).
-dictionaryValue(t_dictVal_string(S)) --> string(S).
+%dictionaryValue(t_dictVal_string(S)) --> string(S).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% Dictionary Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
@@ -748,7 +749,7 @@ eval_dictionaryValues(t_dictValues(DE,DV),ID,Env,Env2):- eval_dictionaryElement(
 eval_dictionaryValues(t_dictValues(),_,Env,Env).
 eval_dictionaryElement(t_dictElement(S,DV),ID,Env,Env1):- eval_string(S,Key), eval_dictionaryValue(DV,Value), initializeDict(ID,Key,Value,Env,Env1).
 eval_dictionaryValue(t_dictVal_expr(E),Val):- eval_expression(E,_,_,Val).
-eval_dictionaryValue(t_dictVal_string(S),Value):- eval_string(S,Value).
+%eval_dictionaryValue(t_dictVal_string(S),Value):- eval_string(S,Value).
 
 initializeDict(ID,Key,Value,[],[(ID,[(Key,Value)])]).
 initializeDict(ID,Key,Value,[(ID,T)|TL],[(ID,L)|TL]):- append(T,[(Key,Value)],L).
