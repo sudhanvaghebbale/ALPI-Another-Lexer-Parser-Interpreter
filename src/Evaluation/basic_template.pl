@@ -82,7 +82,7 @@ concatString(t_concatStr(S1, S2)) --> [concat], ['('], expression(S1) , expressi
 % concatString(t_concatStr(I1, I2)) --> [concat], ['('], identifier(I1),
 % identifier(I2), [')'].
 revString(t_revStr(S)) --> [rev], ['('], expression(S), [')'].
-splitString(t_splitStr(S, D)) --> [split], ['('], expression(S), number(D), [')'].
+splitString(t_splitStr(S, S1, P)) --> [split], ['('], expression(S), expression(S1), expression(P), [')'].
 stringLength(t_strLen(S)) --> [len], ['('], expression(S), [')'].
 
 
@@ -110,6 +110,9 @@ eval_concatString(t_concatStr(S1, S2), Ans) :- eval_expression(S1,_,_,String1), 
 %Split String
 % eval_splitString(String, SepChars, PadChars, SubStrings) :-
 % split_string(String, SepChars, PadChars, SubStrings).
+
+
+eval_splitString(t_splitStr(S, S1, P), SubStrings) :-  split_string(S, S1, P, SubStrings).
 
 
 %String Length
