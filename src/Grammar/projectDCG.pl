@@ -23,9 +23,9 @@ identifier(t_varID(I)) --> varIdentifier(I).
 %identifier(t_listIdentifier(L)) --> listIdentifier(L).
 %identifier(t_dictionaryIdentifier(D)) --> dictionaryIdentifier(D).
 identifier(t_listID(I, D)) --> varIdentifier(I), [ '[' ], number(D), [ ']' ].
+identifier(t_listID_identifier(I, D)) --> varIdentifier(I), ['['], varIdentifier(D), [']'].
 identifier(t_dictID(I,S)) --> varIdentifier(I), ['['], string(S), [']'].
 varIdentifier(I) -->  [I], {atom(I)}.
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% Declaration Grammar %%%%%%%%%%%%%%%%%%%%%%%%
@@ -44,51 +44,26 @@ declaration(t_init_list(I, L)) --> [list], varIdentifier(I), [=], list(L).
 declaration(t_init_dict(I, D)) --> [dict], varIdentifier(I), [=], dictionary(D).
 dataType --> [num] ; [str] ; [bool] ; [list] ; [dict].
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%% Command Grammar %%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%% String Grammar %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Only double quote strings allowed.
+string(t_string(S)) --> ['"'], stringTerm(S), ['"'].
+%string(t_string(S)) --> ['\''], stringTerm(S), ['\''].
+stringTerm(t_stringTerm(S)) --> [S], {atom(S)}.
+stringTerm(t_stringTerm()) --> [].
 
-commandList(t_commandList(C, CL)) --> command(C), commandList(CL).
-commandList(t_commandList(C))  --> command(C).
-%commandList(t_commandList()) --> [].
+stringOps(t_stringOps_concat(CST)) -->  concatString(CST).
+stringOps(t_stringOps_rev(RST)) -->  revString(RST).
+stringOps(t_stringOps_split(SST)) -->  splitString(SST).
+stringOps(t_stringOps_len(SLEN)) -->  stringLength(SLEN).
 
-command(t_command_assign_expr(I,E)) -->  identifier(I), [=], expression(E).
-command(t_command_assign_id(ID1,ID2)) -->  identifier(ID1), [=], identifier(ID2).
-command(t_command_assign_string(I,S)) -->  identifier(I), [=], string(S).
-command(t_command_assign_bool(I,B)) -->  identifier(I), [=], boolean(B).
-command(t_command_ifte(B,CL1,CL2)) --> [if], ['('], boolean(B), [')'], ['{'],
-    commandList(CL1), [ '}' ], [else], ['{'], commandList(CL2), ['}'].
-command(t_command_while(B,CL)) --> [while], ['('], boolean(B), [')'], ['{'],
-    commandList(CL), ['}'].
-
-command(t_command_print(P)) --> [print], ['"'], printStatement(P), ['"'].
-
-command(t_command_func(FC)) --> funCall(FC).
-command(t_command_funcReturn(I,FC)) --> identifier(I), [=], funCall(FC).
-
-command(t_command_ternary(B,E1,E2)) -->
-    boolean(B), [?],  expression(E1), [:], expression(E2).
-
-command(t_command_for_inc(I,E,B,IN,CL)) --> [for], [ '(' ], value(I), [=],
-    expression(E), [;], boolean(B), [;],
-    increment(IN), [ ')' ], [ '{' ], commandList(CL), [ '}' ].
-command(t_command_for_dec(I,E,B,DEC,CL)) --> [for], [ '(' ], value(I), [=],
-    expression(E), [;], boolean(B), [ ; ], decrement(DEC), [ ')' ], [ '{' ],
-    commandList(CL), [ '}' ].
-
-command(t_command_for_range(I,D1,D2,CL)) --> [for], value(I), [in], [range],  ['('],
-    value(D1),  [','], value(D2),  [')'], ['{'], commandList(CL), ['}'].
-
-command(t_command_block(K)) --> block(K).
-
-command(t_command_stringOps(I,OP)) --> identifier(I), [=], stringOps(OP).
-
-/*
-command(t_command_assignlist(I,L)) --> identifier(I),  [=],  list(L).
-command(t_command_assigndict(I,D)) --> identifier(I), [=], dictionary(D).
-*/
-
+concatString(t_concatStr(S1, S2)) --> [concat], expression(S1) , expression(S2).
+% concatString(t_concatStr(I1, I2)) --> [concat], ['('], identifier(I1),
+% identifier(I2), [')'].
+revString(t_revStr(S)) --> [rev], expression(S).
+splitString(t_splitStr(S, D)) --> [split], ['('], expression(S), number(D), [')'].
+stringLength(t_strLen(S)) --> [len], expression(S).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%% Boolean Grammar %%%%%%%%%%%%%%%%%%%%%%
@@ -137,7 +112,6 @@ value(t_expr_string(X)) --> string(X).
 % value(t_dictionaryID(D)) --> dictionaryIdentifier(D).
 number(X) --> [X], {number(X)}.
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% Function Declaration %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -166,14 +140,16 @@ return(t_return(E)) --> [return], expression(E).
 printStatement(t_print_var(I, PS)) --> identifier(I), [','], printStatement(PS).
 printStatement(t_print_var(I)) --> identifier(I).
 
+printStrings(t_print_string(I, PS)) --> printString(I), [','], printStrings(PS).
+printStrings(t_print_string(I)) --> printString(I).
+printString(S) --> [S], { atom(S) }.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%% For Loop Grammar %%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%% Increment & Decrement Grammar %%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-increment(t_increment(I)) --> varIdentifier(I), [++].
-decrement(t_decrement(I)) --> varIdentifier(I), [--].
-
+increment(t_increment(I)) --> identifier(I), [++].
+decrement(t_decrement(I)) --> identifier(I), [--].
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% Lists Grammar %%%%%%%%%%%%%%%%%%%%%%%%
@@ -186,7 +162,7 @@ identifierList(t_idList()) --> [].
 listValues(t_listVal(ELE, LV)) --> element(ELE), [,], listValues(LV).
 listValues(t_listVal()) --> [].
 element(t_element_expr(E))  --> expression(E).
-element(t_element_string(S))  --> string(S).
+%element(t_element_string(S))  --> string(S).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% Dictionary Grammar %%%%%%%%%%%%%%%%%%%%%%%%
@@ -199,4 +175,4 @@ dictionaryValues(t_dictValues(DE, DV)) --> dictionaryElement(DE), [,], dictionar
 dictionaryValues(t_dictValues()) --> [].
 dictionaryElement(t_dictElement(S, DV)) --> string(S), [:], dictionaryValue(DV).
 dictionaryValue(t_dictVal_expr(E)) --> expression(E).
-dictionaryValue(t_dictVal_string(S)) --> string(S).
+%dictionaryValue(t_dictVal_string(S)) --> string(S).
