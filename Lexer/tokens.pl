@@ -630,16 +630,16 @@ printString(S) --> [S], { atom(S) }.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 eval_printStatement(t_print_var(P, PS), Env, Env) :- eval_id(P, Id), eval_identifier_RHS(P, Env, Val),
-    print_message(debug, format('~a = ~a', [Id, Val])), eval_printStatement(PS, Env, Env).
+    print_message(debug, format('~w = ~w', [Id, Val])), eval_printStatement(PS, Env, Env).
 
 eval_printStatement(t_print_var(P), Env, Env) :- eval_id(P, Id), eval_identifier_RHS(P, Env, Val),
-    print_message(debug, format('~a = ~a', [Id, Val])).
+    print_message(debug, format('~w = ~w', [Id, Val])).
 
 eval_printString(t_print_string(P, PS), Env, Env) :-
-    print_message(debug, format('~a', [P])), eval_printString(PS, Env, Env).
+    print_message(debug, format('~w', [P])), eval_printString(PS, Env, Env).
 
 eval_printString(t_print_string(P), Env, Env) :-
-    print_message(debug, format('~a', [P])).
+    print_message(debug, format('~w', [P])).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% For Loop Grammar %%%%%%%%%%%%%%%%%%%%%%%%
