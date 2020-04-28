@@ -502,20 +502,6 @@ check_numbers(Val1, Val2) :- number(Val1), number(Val2), !.
 check_numbers(Val1, Val2) :- 
     print_message(error, format('Illegal operation between ~a and ~a.', [Val1, Val2])), fail.
 
-% To extract id from the tree node
-% Moved to identifier section
-% eval_id(t_id(I), I).
-
-% To extract string from the tree node
-% Moved to string section
-% eval_string(t_stringTerm(S), Env, Env, S).
-
-% To find the value of the variable in the particular environment.
-/*
-lookup(Id, [], _) :-
-    write("Error: "), write(Id), writeln(" does not exist!"), fail.
-*/
-
 % To return true or false based on the presence of the term. 
 check_lookup(_, [], false).
 check_lookup(Id, [(Id, _) | _], true).
