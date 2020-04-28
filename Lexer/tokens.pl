@@ -702,6 +702,7 @@ element(t_element_expr(E))  --> expression(E).
 %%%%%%%%%%%%%%%%%%%%%%% Lists Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%Parses the items in the list one by one
 eval_list(t_list(X),ID,Env,Env1):- eval_identifierList(X,ID,Env,Env1).
 eval_identifierList(t_idList(LV,ELE),ID,Env,Env2):- eval_listValues(LV,ID,Env,Env1), eval_element(ELE,ID,Env1,Env2).
 eval_identifierList(t_idList(),_,Env,Env).
@@ -736,10 +737,13 @@ updateList([_|T],0,Val,[Val|T]).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 dictionary(t_dictionary(DI)) --> ['{'], dictionaryItems(DI), ['}'].
+
 dictionaryItems(t_dictItems(DV, DE)) --> dictionaryValues(DV), dictionaryElement(DE).
 dictionaryItems(t_dictItems()) --> [].
+
 dictionaryValues(t_dictValues(DE, DV)) --> dictionaryElement(DE), [,], dictionaryValues(DV).
 dictionaryValues(t_dictValues()) --> [].
+
 dictionaryElement(t_dictElement(S, DV)) --> string(S), [:], dictionaryValue(DV).
 dictionaryValue(t_dictVal_expr(E)) --> expression(E).
 
@@ -747,6 +751,7 @@ dictionaryValue(t_dictVal_expr(E)) --> expression(E).
 %%%%%%%%%%%%%%%%%%%%%%% Dictionary Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%To parse the dictionary key, value pairs one by one
 eval_dictionary(t_dictionary(DI),ID,Env,Env1):- eval_dictionaryItems(DI,ID,Env,Env1).
 eval_dictionaryItems(t_dictItems(DV,DE),ID,Env,Env2):- eval_dictionaryValues(DV,ID,Env,Env1), eval_dictionaryElement(DE,ID,Env1,Env2).
 eval_dictionaryItems(t_dictItems(),_,Env,Env).
@@ -755,6 +760,7 @@ eval_dictionaryValues(t_dictValues(),_,Env,Env).
 eval_dictionaryElement(t_dictElement(S,DV),ID,Env,Env1):- eval_string(S,Key), eval_dictionaryValue(DV,Value), initializeDict(ID,Key,Value,Env,Env1).
 eval_dictionaryValue(t_dictVal_expr(E),Val):- eval_expression(E,_,_,Val).
 
+%To initialize the dictionary identifier with the dictionary items 
 initializeDict(ID,Key,Value,[],[(ID,[(Key,Value)])]).
 initializeDict(ID,Key,Value,[(ID,T)|TL],[(ID,L)|TL]):- append(T,[(Key,Value)],L).
 initializeDict(ID,Key,Value,[H|T],[H|Env]):- H \= (ID,_), initializeDict(ID,Key,Value,T,Env).
@@ -763,14 +769,14 @@ initializeDict(ID,Key,Value,[H|T],[H|Env]):- H \= (ID,_), initializeDict(ID,Key,
 lookupDict(ID,Key,[(ID,T)|_],Val):- lookupDict(T,Key,Val).
 lookupDict(ID,Key,[H|T],Val):- H \= (ID,_), lookupDict(ID,Key,T,Val).
 
-%Finds the item within the list
+%Finds the value for a given key within the dictionary
 lookupDict([(Key,Val)|_],Key,Val).
 lookupDict([H|T],Key,Val):- H \= (Key,_), lookupDict(T,Key,Val).
 
-%Finds the list identifier in the environment
+%To update the dictionary
 updateDict(ID,Key,Value,[(ID,T)|TL],[(ID,L)|TL]):- updateDict(T,Key,Value,L).
 updateDict(ID,Key,Value,[H|T],[H|Env]):-  H \= (ID,_), updateDict(ID,Key,Value,T,Env).
 
-%Updates the element within the list
+%Updates a particular key within the dictionary
 updateDict([(Key,_)|T],Key,Value,[(Key,Value)|T]).
 updateDict([H|T],Key,Value,[H|L]):- H \= (Key,_), updateDict(T,Key,Value,L).

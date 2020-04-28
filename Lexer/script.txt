@@ -1,19 +1,9 @@
 begin
-    list arr = [64, 34, 25, 12, 22, 11, 90]
-    num temp
-    num j1
-    //Traverse through all array elements 
-    for i in range(0, 7){
-        for j in range(0, 6){
-	    print j           
-	    j1 = j + 1
-            if(arr[j] > arr[j1]){
-                temp = arr[j1]
-		arr[j1] = arr[j]
-		arr[j] = temp
-	    }
-	}
-    }
-    
-    print arr
+    dict arr = {" key1 " : " value1 ", " key2 " : " value2 ", " key3 " : " value3 "}
+    temp = arr[" key1 "]
+    arr[" key1 "] = " updatedvalue1 "
+    arr[" key2 "] = " updatedvalue2 "
+    arr[" key3 "] = concat arr[" key1 "] arr[" key2 "]
+    arr[" key1 "] = temp
+    print arr    
 end
