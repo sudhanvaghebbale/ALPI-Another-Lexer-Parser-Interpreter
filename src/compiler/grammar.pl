@@ -150,11 +150,9 @@ decrement(t_decrement(I)) --> identifier(I), [--].
 list(t_list(IL)) --> [ '[' ], identifierList(IL), [ ']' ].
 identifierList(t_idList(LV,ELE)) --> listValues(LV), element(ELE).
 identifierList(t_idList()) --> [].
-%Added comma between elements
 listValues(t_listVal(ELE, LV)) --> element(ELE), [,], listValues(LV).
 listValues(t_listVal()) --> [].
 element(t_element_expr(E))  --> expression(E).
-%element(t_element_string(S))  --> string(S).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% Dictionary Grammar %%%%%%%%%%%%%%%%%%%%%%%%
@@ -167,4 +165,3 @@ dictionaryValues(t_dictValues(DE, DV)) --> dictionaryElement(DE), [,], dictionar
 dictionaryValues(t_dictValues()) --> [].
 dictionaryElement(t_dictElement(S, DV)) --> string(S), [:], dictionaryValue(DV).
 dictionaryValue(t_dictVal_expr(E)) --> expression(E).
-%dictionaryValue(t_dictVal_string(S)) --> string(S).
