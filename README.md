@@ -14,8 +14,9 @@ This repository contains code, sample programs and the entire documentation rega
     `where swipl`
 4. Put these paths in their respective files like so `#!/opt/anaconda3/envs/prolog/bin/python` and `%#!/usr/local/bin/swipl`
 5. Get current path like so `pwd`
-6. Put current path in bash script for python and swipl 
-  1.`vim ALP`
+6. Put current path in bash script for python and swipl
+    1. `vim ALP`
+
 
 ## How to build and run ALPI?
 
