@@ -1,0 +1,23 @@
+
+begin
+	num x = 0
+	num u = 1
+	num z = 1
+	num y = 6
+	num w = 1024
+	for (i = 0 ; i < 10 ; i++){
+		w = w / 2
+	}
+	print w
+
+	for j in range(1, 10){
+		x = x + 1
+		y = y - 1
+		z ++ 
+	}
+	print x, y, z
+	while(not u == 3){
+		u ++
+	}
+	print u
+end
