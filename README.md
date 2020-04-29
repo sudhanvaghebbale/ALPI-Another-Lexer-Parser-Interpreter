@@ -16,9 +16,11 @@ This repository contains code, sample programs and the entire documentation rega
 5. Get current path like so `pwd`
 6. Put current path in bash script for python and swipl
     1. `vim ALP`
+    2. edit this line to `python your/path/to/here/SER502-Spring2020-Team26/src/runtime/lexer.py`
+    3. Same for pl file.
+7. Put current path for script.txt and tokens.txt to `lexer.py` and for `program.pl` respectively.
 
 
-## How to build and run ALPI?
 
 
 * Youtube Video Link: 
