@@ -15,6 +15,7 @@ This repository contains code, sample programs and the entire documentation rega
 * Go to `SER502-Spring2020-Team26/src/runtime`
 * Check you path for python and swipl by typing  ` where python`,
     `where swipl`
+* Put these paths in their respective files like so `#!/opt/anaconda3/envs/prolog/bin/python` and `%#!/usr/local/bin/swipl`
 
 ## How to build and run ALPI?
 
