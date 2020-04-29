@@ -12,14 +12,14 @@ This repository contains code, sample programs and the entire documentation rega
 2. Go to `SER502-Spring2020-Team26/src/runtime`
 3. Check you path for python and swipl by typing  ` where python`,
     `where swipl`
-4. Put these paths in their respective files like so `#!/opt/anaconda3/envs/prolog/bin/python` and `#!/usr/local/bin/swipl`
+4. Put these paths in their respective files at the top of scripts like so `#!/opt/anaconda3/envs/prolog/bin/python` and `#!/usr/local/bin/swipl`
 5. Get current path like so `pwd`
 6. Put current path in bash script for python and swipl
     1. `vim ALP`
     2. edit this line to `python your/path/to/here/SER502-Spring2020-Team26/src/runtime/lexer.py`
     3. Same for pl file.
 7. Put current path for script.txt and tokens.txt to `lexer.py` and for `program.pl` respectively.
-8. Run `chmod +x ALP` and `./ALP` to execute.
+8. Run `chmod +x ALP` and `./ALP` to execute (Run these two evertime a change is made).
 
 
 
