@@ -16,6 +16,9 @@ This repository contains code, sample programs and the entire documentation rega
 * Check you path for python and swipl by typing  ` where python`,
     `where swipl`
 * Put these paths in their respective files like so `#!/opt/anaconda3/envs/prolog/bin/python` and `%#!/usr/local/bin/swipl`
+* Get current path like so `pwd`
+* Put current path in bash script for python and swipl. 
+** `vim ALP`
 
 ## How to build and run ALPI?
 
