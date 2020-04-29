@@ -14,7 +14,7 @@
 
 main :-
     %Paste the path to the tokens.txt file here
-    open('/Users/jubanjanmacbook/PycharmProjects/502_Project/SER502-Spring2020-Team26/src/runtime/tokens.txt', read, Str),
+    open('C:\\ASU\\SER503\\SER502-Spring2020-Team26\\src\\runtime\\tokens.txt', read, Str),
     read_file(Str,Lines),!,
     close(Str),
     list_butlast(Lines,Tokens),
@@ -568,6 +568,9 @@ localScope(Id, [H | T], [H1 | T1], Env, NewEnv) :- updateAppend(Id, (H1, H), Env
 % To get from the environment
 eval_id(t_id(t_varID(X)), X).
 eval_id(t_varID(X), X).
+eval_id(t_listID(_,_), list_value).
+eval_id(t_listID_identifier(_,_), list_value).
+eval_id(t_dictID(_,_), dictionary_value).
 
 % To find the length of parameter list.
 find_length([], 0).

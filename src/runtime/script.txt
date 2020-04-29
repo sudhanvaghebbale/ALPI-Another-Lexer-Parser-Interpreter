@@ -1,9 +1,23 @@
+
 begin
-    dict arr = {" key1 " : " value1 ", " key2 " : " value2 ", " key3 " : " value3 "}
-    temp = arr[" key1 "]
-    arr[" key1 "] = " updatedvalue1 "
-    arr[" key2 "] = " updatedvalue2 "
-    arr[" key3 "] = concat arr[" key1 "] arr[" key2 "]
-    arr[" key1 "] = temp
-    print arr    
+	num x = 0
+	num u = 1
+	num z = 1
+	num y = 6
+	num w = 1024
+	for (i = 0 ; i < 10 ; i++){
+		w = w / 2
+	}
+	print w
+
+	for j in range(1, 10){
+		x = x + 1
+		y = y - 1
+		z ++ 
+	}
+	print x, y, z
+	while(not u == 3){
+		u ++
+	}
+	print u
 end

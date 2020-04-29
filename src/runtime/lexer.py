@@ -131,7 +131,7 @@ def isFloat(string):
 
 
 if __name__ =='__main__':
-    res_ =  Lexer('/Users/jubanjanmacbook/PycharmProjects/502_Project/SER502-Spring2020-Team26/src/runtime/script.txt').tokenize()
+    res_ =  Lexer('C:\\ASU\\SER503\\SER502-Spring2020-Team26\\src\\runtime\\script.txt').tokenize()
     
     ''' handle quotes'''
 
