@@ -8,7 +8,7 @@ This repository contains code, sample programs and the entire documentation rega
 * Runtime: Prolog
 
 ## How to install ALPI?
-* clone out repo either directly from github or just gitclone ''
+* clone out repo either directly from github or just `gitclone https://github.com/sudhanvaghebbale/SER502-Spring2020-Team26.git ` 
 
 ## How to build and run ALPI?
 
