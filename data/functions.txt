@@ -1,0 +1,16 @@
+begin
+	num x = 2
+	num y = 3
+	num z
+	num u
+	func mod(x, y){
+		num z = 0
+		x = x % y
+		print x, y, z
+		return x
+	}
+
+	z = mod(20, 10)
+	u = mod(4, 5)
+	print z, u
+end

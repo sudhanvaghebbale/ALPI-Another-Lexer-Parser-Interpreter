@@ -1,0 +1,12 @@
+begin
+    str s1 = " string1 "
+    str s2 = " string2 "
+    str s3 = " string3 "
+    str res1
+    str res2
+    num res3
+    res1 = rev s1
+    res2 = concat s2 s3
+    res3 = len res2
+    print res1,res2,res3
+end

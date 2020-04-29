@@ -1,0 +1,15 @@
+begin
+	num x = 8
+	num y = 4
+	num z
+	num u
+	num v
+	num w
+	num s
+	num t
+	z = x + y - 2 * x
+	u = x - ( y / 2 + 6 * x )
+	v = x * y * ( 2 / x * y )
+	w = x / y * 4 - u + ( y % z )
+	print x, y, z, u, v, w
+end
