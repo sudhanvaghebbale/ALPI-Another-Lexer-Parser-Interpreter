@@ -57,7 +57,7 @@ Contribution after Milestone 1:
             - Strings Operations Grammar and Evaluation
         3. Jubanjan Dhar
             - Fix lexer problems
-            - Build a batch script pipeline to execute programs
+            - Build a bash script pipeline to execute programs
         4. Sudhanva Hebbale
             - Functions Evaluation
             - Fix Functions to allow declarations

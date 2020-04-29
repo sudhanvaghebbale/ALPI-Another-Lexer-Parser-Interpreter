@@ -12,11 +12,11 @@
 
 main :-
     %Paste the path to the tokens.txt file here
-    open('C:\\ASU\\SER503\\SER502-Spring2020-Team26\\Lexer\\tokens.txt', read, Str),
+    open('/Users/jubanjanmacbook/PycharmProjects/502_Project/SER502-Spring2020-Team26/src/runtime/tokens.txt', read, Str),
     read_file(Str,Lines),!,
     close(Str),
     list_butlast(Lines,Tokens),
-    writeq(Tokens), nl,
+    %writeq(Tokens), nl,
     program(P,Tokens,[]),
     eval_program(P,[],_),
     halt.

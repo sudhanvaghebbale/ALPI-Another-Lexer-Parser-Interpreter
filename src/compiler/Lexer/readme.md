@@ -8,7 +8,7 @@
 - [x] Output file readable by prolog Script.
 - [x] Works with increment and decremnent operator.
 - [x] Tokenizer doesn't tokenize ,.+-^|/\= so, need spaces between characters when declaring them. 
-- [ ] To make the lexer.py take filenames as arguments from shell to compile tokens on-the-go. 
+- [x] To make the lexer.py take filenames as arguments from shell to compile tokens on-the-go. 
 - [ ] ~~Execute Multiple files at once?~~
 - [x] Accomodate  (, {, [ for prolog script in lexer.
 

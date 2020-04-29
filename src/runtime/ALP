@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
 
-python /Users/jubanjanmacbook/PycharmProjects/502_Project/SER502-Spring2020-Team26/Lexer/lexer.py
+python /Users/jubanjanmacbook/PycharmProjects/502_Project/SER502-Spring2020-Team26/src/runtime/lexer.py
 
 echo "Done with Lexical Analysis!"
 
-swipl /Users/jubanjanmacbook/PycharmProjects/502_Project/SER502-Spring2020-Team26/Lexer/tokens.pl
+swipl /Users/jubanjanmacbook/PycharmProjects/502_Project/SER502-Spring2020-Team26/src/runtime/program.pl
 
 
 
