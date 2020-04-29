@@ -7,8 +7,14 @@ This repository contains code, sample programs and the entire documentation rega
 * Parser: Prolog
 * Runtime: Prolog
 
-## How to install ALPI?
-* clone out repo either directly from github or just `gitclone https://github.com/sudhanvaghebbale/SER502-Spring2020-Team26.git ` 
+## How to install and run ALPI?
+* Download our repository either directly from github or just 
+
+`gitclone https://github.com/sudhanvaghebbale/SER502-Spring2020-Team26.git ` 
+
+* Go to `SER502-Spring2020-Team26/src/runtime`
+* Check you path for python and swipl by typing  ` where python`,
+    `where swipl`
 
 ## How to build and run ALPI?
 
