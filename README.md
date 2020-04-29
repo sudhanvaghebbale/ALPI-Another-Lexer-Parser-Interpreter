@@ -8,17 +8,17 @@ This repository contains code, sample programs and the entire documentation rega
 * Runtime: Prolog
 
 ## How to install and run ALPI?
-* Download our repository either directly from github or just 
+1. Download our repository either directly from github or just 
 
 `gitclone https://github.com/sudhanvaghebbale/SER502-Spring2020-Team26.git ` 
 
-* Go to `SER502-Spring2020-Team26/src/runtime`
-* Check you path for python and swipl by typing  ` where python`,
+2. Go to `SER502-Spring2020-Team26/src/runtime`
+3. Check you path for python and swipl by typing  ` where python`,
     `where swipl`
-* Put these paths in their respective files like so `#!/opt/anaconda3/envs/prolog/bin/python` and `%#!/usr/local/bin/swipl`
-* Get current path like so `pwd`
-* Put current path in bash script for python and swipl. 
-** `vim ALP`
+4. Put these paths in their respective files like so `#!/opt/anaconda3/envs/prolog/bin/python` and `%#!/usr/local/bin/swipl`
+5. Get current path like so `pwd`
+6. Put current path in bash script for python and swipl. 
+  1.`vim ALP`
 
 ## How to build and run ALPI?
 
