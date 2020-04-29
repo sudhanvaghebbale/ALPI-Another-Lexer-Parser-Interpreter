@@ -2,7 +2,7 @@
 This repository contains code, sample programs and the entire documentation regarding the implementation details of our new programming language, **ALPI - Another Lexer Parser Interpreter**.
 
 ## Tools used to build ALPI
-* OS: MacOS and Windows
+* OS: MacOS and Linux
 * Lexer: Python3 using the NLTK package
 * Parser: Prolog
 * Runtime: Prolog
@@ -19,9 +19,15 @@ This repository contains code, sample programs and the entire documentation rega
     2. edit this line to `python your/path/to/here/SER502-Spring2020-Team26/src/runtime/lexer.py`
     3. Same for pl file.
 7. Put current path for script.txt and tokens.txt to `lexer.py` and for `program.pl` respectively.
-8. Run `chmod +x ALP` and `./ALP` to execute (Run these two evertime a change is made).
+8. Run `chmod +x ALP` and `./ALP` to execute (Run these two everytime a change is made).
 
-
+#### Misc
+1. Install NLTK tokenizer by `pip install nltk`
+2. Under lexer.py file uncomment the following if you're running the NLTK tokenizer for the first time. 
+```
+import nltk
+nltk.download('punkt')
+```
 
 
 * Youtube Video Link: 
