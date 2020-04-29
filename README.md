@@ -12,7 +12,7 @@ This repository contains code, sample programs and the entire documentation rega
 2. Go to `SER502-Spring2020-Team26/src/runtime`
 3. Check you path for python and swipl by typing  ` where python`,
     `where swipl`
-4. Put these paths in their respective files like so `#!/opt/anaconda3/envs/prolog/bin/python` and `%#!/usr/local/bin/swipl`
+4. Put these paths in their respective files like so `#!/opt/anaconda3/envs/prolog/bin/python` and `#!/usr/local/bin/swipl`
 5. Get current path like so `pwd`
 6. Put current path in bash script for python and swipl
     1. `vim ALP`
