@@ -1,3 +1,4 @@
+#!/opt/anaconda3/envs/prolog/bin/python
 '''
 
 # Authors: Jubanjan Dhar, Ankit Vutukuri, Harmish Ganatra, Sudhanva Hebbale
@@ -6,8 +7,6 @@
 # Date Created: 13 April 2020
 
 '''
-
-#!/opt/anaconda3/envs/prolog/bin/python
 
 from nltk.tokenize import word_tokenize
 import re

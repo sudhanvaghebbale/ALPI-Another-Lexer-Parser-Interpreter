@@ -1,3 +1,5 @@
+#!/usr/local/bin/swipl
+
 /* 
 % Authors: Ankit Vutukuri, Jubanjan Dhar, Harmish Ganatra, Sudhanva Hebbale.
 % Purpose: The parser and the evaluation script
@@ -5,7 +7,7 @@
 % Date Created: 13 April 2020
 */
 
-% !/usr/local/bin/swipl
+
 
 :- initialization(main,program).
 
