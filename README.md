@@ -6,3 +6,10 @@ This repository contains code, sample programs and the entire documentation rega
 * Lexer: Python3 using the NLTK package
 * Parser: Prolog
 * Runtime: Prolog
+
+## How to install ALPI?
+
+## How to build and run ALPI?
+
+
+* Youtube Video Link: 
