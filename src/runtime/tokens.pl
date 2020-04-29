@@ -21,14 +21,14 @@ main :-
     eval_program(P,[],_),
     halt.
 
-%Removes end_of_file token
+% Removes end_of_file token
 list_butlast([X|Xs], Ys) :-
    list_butlast_prev(Xs, Ys, X).
 list_butlast_prev([], [], _).
 list_butlast_prev([X1|Xs], [X0|Ys], X0) :-
    list_butlast_prev(Xs, Ys, X1).
 
-%Reads tokens line by line from the file
+% Reads tokens line by line from the file
 read_file(Stream,[]) :-
     at_end_of_stream(Stream).
 read_file(Stream,[X|L]) :-
@@ -59,7 +59,6 @@ eval_block(t_block(D, C), Env, NewEnv) :-
 
 eval_funcBlock(t_funcBlock(D, C), Env, NewEnv) :-
     eval_declarationList(D, Env, Env1), eval_commandList(C, Env1, NewEnv).
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% Declaration Grammar %%%%%%%%%%%%%%%%%%%%%%%%
@@ -106,18 +105,17 @@ eval_stringOps(t_stringOps_concat(X),Env,Val) :- eval_concatString(X,Env,Val).
 eval_stringOps(t_stringOps_rev(X),Env,Val) :- eval_revStr(X,Env,Val).
 eval_stringOps(t_stringOps_len(X),Env,Val) :- eval_stringLength(X,Env,Val).
 
+% Reverse String
 eval_revStr(t_revStr(S),Env,Ans) :- eval_expression(S,Env,_,String), atom(String), atom_string(String,Str), string_chars(Str, List), rev(List, TempAns, []), string_chars(Ans, TempAns).
 eval_revStr(t_revStr(S),Env,Ans) :- eval_expression(S,Env,_,String), string_chars(String, List), rev(List, TempAns, []), string_chars(Ans, TempAns).
 rev([], Z, Z).
 rev([H|T],Z,Acc) :- rev(T,Z,[H|Acc]).
 
-%Concat String
+% Concat String
 eval_concatString(t_concatStr(S1, S2),Env,Ans) :- eval_expression(S1,Env,_,String1), atom(String1), atom_string(String1,Str1), eval_expression(S2,Env,_,String2), atom(String2), atom_string(String2,Str2), string_concat(Str1, Str2, Ans).
 eval_concatString(t_concatStr(S1, S2),Env,Ans) :- eval_expression(S1,Env,_,String1), eval_expression(S2,Env,_,String2), string_concat(String1, String2, Ans).
 
-
-
-%String Length
+% String Length
 eval_stringLength(t_strLen(S),Env,Ans) :- eval_expression(S,Env,_,String), atom(String), atom_string(String,Str), string_length(Str, Ans).
 eval_stringLength(t_strLen(S),Env,Ans) :- eval_expression(S,Env,_,String), string_length(String, Ans).
 
@@ -136,10 +134,6 @@ eval_declaration(t_declaration(Id), Env, NewEnv) :- update(Id, 'None', Env, NewE
 
 eval_declaration(t_funcDeclaration(FD), Env, NewEnv) :- eval_functionDeclaration(FD, Env, NewEnv).
 
-% If value not in lookup table, put a garbage value.
-/*eval_declaration(t_declaration(I), Env, NewEnv) :-
-    eval_id(I, Id), not(lookup(Id, Env, _)), update(Id, _, Env, NewEnv).
-*/
 % declaration(t_init(I, _)) --> identifier(I), [=], expression.
 eval_declaration(t_init_expr(Id,E), Env, NewEnv) :-
     eval_expression(E, Env, Env1, Val1), update(Id, Val1, Env1, NewEnv).
@@ -158,6 +152,7 @@ eval_declaration(t_init_bool(Id, V), Env, NewEnv) :-
 % declaration(t_init_list(I,L)) --> identifier(I), [=], list(L)
 eval_declaration(t_init_list(Id,L), Env, NewEnv) :-
     eval_list(L,Id,Env,NewEnv).
+    
 % declaration(t_init_list(I,D)) --> identifier(I), [=], dictionary(D)
 eval_declaration(t_init_dict(Id,D), Env, NewEnv) :-
     eval_dictionary(D,Id,Env,NewEnv).
@@ -168,11 +163,9 @@ eval_declaration(t_init_dict(Id,D), Env, NewEnv) :-
 
 commandList(t_commandList(C, CL)) --> command(C), commandList(CL).
 commandList(t_commandList(C))  --> command(C).
-%commandList(t_commandList()) --> [].
 
 command(t_command_assign_expr(I,E)) -->  identifier(I), [=], expression(E).
 command(t_command_assign_id(ID1,ID2)) -->  identifier(ID1), [=], identifier(ID2).
-%command(t_command_assign_string(I,S)) -->  identifier(I), [=], string(S).
 command(t_command_assign_bool(I,B)) -->  identifier(I), [=], boolean(B).
 command(t_command_if(B,CL1)) --> [if], ['('], boolean(B), [')'], ['{'],
     commandList(CL1), [ '}' ].
@@ -204,10 +197,6 @@ command(t_command_stringOps(I,OP)) --> identifier(I), [=], stringOps(OP).
 
 command(t_command_increment(I)) --> increment(I).
 command(t_command_increment(I)) --> decrement(I).
-/*
-command(t_command_assignlist(I,L)) --> identifier(I),  [=],  list(L).
-command(t_command_assigndict(I,D)) --> identifier(I), [=], dictionary(D).
-*/
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% Command Evaluation %%%%%%%%%%%%%%%%%%%%%%
@@ -221,10 +210,6 @@ eval_commandList(t_commandList(C), Env, NewEnv) :- eval_command(C, Env, NewEnv).
 % command(t_command_assign_expr(I,E)) --> identifier(I),[=],expression(E).
 eval_command(t_command_assign_expr(I, E), Env, NewEnv) :-
     eval_expression(E, Env, Env1, Val), eval_identifier_LHS(I,Env1,NewEnv,Val).
-
-% command(t_command_assign_string(I,S)) --> identifier(I),[=],string(S).
-%eval_command(t_command_assign_string(I,S), Env, NewEnv) :-
-    %eval_string(S,Val), eval_identifier_LHS(I,Env,NewEnv,Val).
 
 % command(t_command_assign_bool(I,B)) --> identifier(I),[=],boolean(B).
 eval_command(t_command_assign_bool(I,B), Env, NewEnv) :-
@@ -290,10 +275,6 @@ eval_command(t_command_stringOps(I,OP),Env,NewEnv) :-
 eval_command(t_command_increment(I),Env,NewEnv) :- eval_increment(I,Env,NewEnv).
 
 eval_command(t_command_decrement(I),Env,NewEnv) :- eval_decrement(I,Env,NewEnv).
-
-check_number(Val) :- number(Val), !.
-check_number(Val) :- not(number(Val)), 
-    print_message(error, format('~a has to be an integer', [Val])).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%% Boolean Grammar %%%%%%%%%%%%%%%%%%%%%%
@@ -450,6 +431,7 @@ eval_expression(t_div(X,Y), Env, NewEnv, Val) :-
     eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2),
     check_numbers(Val1, Val2), Val is Val1 / Val2.
 
+% E -> E '%' E
 eval_expression(t_mod(X,Y), Env, NewEnv, Val) :-
     eval_expression(X, Env, Env1, Val1), eval_expression(Y, Env1, NewEnv, Val2),
     check_numbers(Val1, Val2), Val is mod(Val1, Val2).
@@ -483,7 +465,7 @@ update(Id, Val, [(Id, _) | T], [(Id, Val) | T]).
 update(Id, Val, [H | T], [H | R]) :-
     H \= (Id, _), update(Id, Val, T, R).
 
-% To 
+% To merge parameter lists
 updateAppend(Id, Val, [], [(Id, Val)]).
 updateAppend(Id, Val, [(Id, Prev) | T], [(Id, Result) | T]) :- append(Prev, [Val], Result).
 updateAppend(Id, Val, [H | T], [H | R]) :-
@@ -526,7 +508,7 @@ eval_functionDeclaration(t_funcDeclr(I, PL, DL, CL, E), Env, NewEnv) :-
 
 % Function Call for functions without return
 eval_funCall(t_funCall(I, CPL), Env, Env) :-
-     eval_id(I, Id),  lookup(Id, Env, [P, K]),
+    eval_id(I, Id),  lookup(Id, Env, [P, K]),
     eval_parameters(I, CPL, P, Env, Env1), lookup(Id, Env1, [P, K | T]), eval_funcBlock(K, T, _Env2), !.
 
 % Function Call for functions with return
@@ -584,10 +566,6 @@ localScope(Id, [H | T], [H1 | T1], Env, NewEnv) :- updateAppend(Id, (H1, H), Env
 % To get from the environment
 eval_id(t_id(t_varID(X)), X).
 eval_id(t_varID(X), X).
-eval_id(t_listID(_,_), list_value).
-eval_id(t_listID_identifier(_,_), list_value).
-eval_id(t_dictID(_,_), dictionary_value).
-
 
 % To find the length of parameter list.
 find_length([], 0).
@@ -667,21 +645,20 @@ eval_forLoop_range(t_for_range(I, D1, D2, CL), Env, NewEnv) :-
 eval_forLoop_range(t_for_range(I, _D1, D2, _CL), Env, NewEnv) :-
     eval_boolean(t_boolean_lt(I, D2), Env, Env, false), eval_identifier_LHS(I, Env, NewEnv, 0).
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% Identifier Grammar %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%Different formats for identifiers: 
+% Different formats for identifiers: 
 identifier(t_varID(I)) --> varIdentifier(I).
 
-%List index is specified as a number.
+% List index is specified as a number.
 identifier(t_listID(I, D)) --> varIdentifier(I), [ '[' ], number(D), [ ']' ].
 
-%List index is specified as a variable.
+% List index is specified as a variable.
 identifier(t_listID_identifier(I, D)) --> varIdentifier(I), ['['], varIdentifier(D), [']'].
 
-%Dictionary identifier with key string.
+% Dictionary identifier with key string.
 identifier(t_dictID(I,S)) --> varIdentifier(I), ['['], string(S), [']'].
 varIdentifier(I) -->  [I], {atom(I)}.
 
@@ -689,26 +666,26 @@ varIdentifier(I) -->  [I], {atom(I)}.
 %%%%%%%%%%%%%%%%%%%% Identifier Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%When identifier appears on LHS, update its value.
+% When identifier appears on LHS, update its value.
 eval_identifier_LHS(t_id(t_varID(Id)),Env,NewEnv,Val):- update(Id,Val,Env,NewEnv).
 eval_identifier_LHS(t_varID(Id),Env,NewEnv,Val):- update(Id,Val,Env,NewEnv).
 
-%Update the value at a specific list index.
+% Update the value at a specific list index.
 eval_identifier_LHS(t_listID(Id,Pos),Env,NewEnv,Val):- updateList(Id,Pos,Val,Env,NewEnv).
 eval_identifier_LHS(t_listID_identifier(Id1,Id2),Env,NewEnv,Val):- lookup(Id2,Env,Pos), updateList(Id1,Pos,Val,Env,NewEnv).
 
-%Update the value for a specific dictionary key.
+% Update the value for a specific dictionary key.
 eval_identifier_LHS(t_dictID(Id,Key),Env,NewEnv,Val):- eval_string(Key,Key1), updateDict(Id,Key1,Val,Env,NewEnv).
 
 
-%When identifier appears on RHS, lookup its value.
+% When identifier appears on RHS, lookup its value.
 eval_identifier_RHS(t_varID(Id),Env,Val):- lookup(Id,Env,Val).
 
-%Lookup the value at a specific list index.
+% Lookup the value at a specific list index.
 eval_identifier_RHS(t_listID(Id,Pos),Env,Val):- lookupList(Id,Pos,Env,Val).
 eval_identifier_RHS(t_listID_identifier(Id1,Id2),Env,Val):- lookup(Id2,Env,Pos), lookupList(Id1,Pos,Env,Val).
 
-%Lookup the value for a specific dictionary key.
+% Lookup the value for a specific dictionary key.
 eval_identifier_RHS(t_dictID(Id,S),Env,Val):- eval_string(S,Key), lookupDict(Id,Key,Env,Val).
 
 
@@ -719,7 +696,7 @@ eval_identifier_RHS(t_dictID(Id,S),Env,Val):- eval_string(S,Key), lookupDict(Id,
 list(t_list(IL)) --> [ '[' ], identifierList(IL), [ ']' ].
 identifierList(t_idList(LV,ELE)) --> listValues(LV), element(ELE).
 identifierList(t_idList()) --> [].
-%Added comma between elements
+% Added comma between elements
 listValues(t_listVal(ELE, LV)) --> element(ELE), [,], listValues(LV).
 listValues(t_listVal()) --> [].
 element(t_element_expr(E))  --> expression(E).
@@ -728,32 +705,32 @@ element(t_element_expr(E))  --> expression(E).
 %%%%%%%%%%%%%%%%%%%%%%% Lists Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%Parses the items in the list one by one
+% Parses the items in the list one by one
 eval_list(t_list(X),ID,Env,Env1):- eval_identifierList(X,ID,Env,Env1).
 eval_identifierList(t_idList(LV,ELE),ID,Env,Env2):- eval_listValues(LV,ID,Env,Env1), eval_element(ELE,ID,Env1,Env2).
 eval_identifierList(t_idList(),_,Env,Env).
 eval_listValues(t_listVal(ELE,LV),ID,Env,Env2):- eval_element(ELE,ID,Env,Env1), eval_listValues(LV,ID,Env1,Env2).
 eval_listValues(t_listVal(),_,Env,Env).
 eval_element(t_element_expr(X),ID,Env,Env2):- eval_expression(X,Env,Env1,Val), initializeList(ID,Val,Env1,Env2).
-
-%Initializes the list
+ 
+% Initializes the list
 initializeList(ID,X,[],[(ID,[X])]).
 initializeList(ID,X,[(ID,T)|TL],[(ID,L)|TL]):- append(T,[X],L).
 initializeList(ID,X,[H|T],[H|Env]):- H \= (ID,_), initializeList(ID,X,T,Env).
 
-%Finds the list identifier in the environment
+% Finds the list identifier in the environment
 lookupList(ID,Pos,[(ID,T)|_],Val):- lookupList(T,Pos,Val).
 lookupList(ID,Pos,[H|T],Val):- H \= (ID,_), lookupList(ID,Pos,T,Val).
 
-%Finds the item within the list
+% Finds the item within the list
 lookupList([_|T],Pos,Val):- Pos \= 0, Pos1 is Pos - 1, lookupList(T,Pos1,Val).
 lookupList([H|_],0,H).
 
-%Finds the list identifier in the environment
+% Finds the list identifier in the environment
 updateList(ID,Pos,Val,[(ID,T)|TL],[(ID,L)|TL]):- updateList(T,Pos,Val,L).
 updateList(ID,Pos,Val,[H|T],[H|L]):-  H \= (ID,_), updateList(ID,Pos,Val,T,L).
 
-%Updates the element within the list
+% Updates the element within the list
 updateList([H|T],Pos,Val,[H|L]):- Pos \= 0, Pos1 is Pos - 1, updateList(T,Pos1,Val,L).
 updateList([_|T],0,Val,[Val|T]).
 
@@ -777,7 +754,7 @@ dictionaryValue(t_dictVal_expr(E)) --> expression(E).
 %%%%%%%%%%%%%%%%%%%%%%% Dictionary Evaluation %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%To parse the dictionary key, value pairs one by one
+% To parse the dictionary key, value pairs one by one
 eval_dictionary(t_dictionary(DI),ID,Env,Env1):- eval_dictionaryItems(DI,ID,Env,Env1).
 eval_dictionaryItems(t_dictItems(DV,DE),ID,Env,Env2):- eval_dictionaryValues(DV,ID,Env,Env1), eval_dictionaryElement(DE,ID,Env1,Env2).
 eval_dictionaryItems(t_dictItems(),_,Env,Env).
@@ -786,23 +763,23 @@ eval_dictionaryValues(t_dictValues(),_,Env,Env).
 eval_dictionaryElement(t_dictElement(S,DV),ID,Env,Env1):- eval_string(S,Key), eval_dictionaryValue(DV,Value), initializeDict(ID,Key,Value,Env,Env1).
 eval_dictionaryValue(t_dictVal_expr(E),Val):- eval_expression(E,_,_,Val).
 
-%To initialize the dictionary identifier with the dictionary items 
+% To initialize the dictionary identifier with the dictionary items 
 initializeDict(ID,Key,Value,[],[(ID,[(Key,Value)])]).
 initializeDict(ID,Key,Value,[(ID,T)|TL],[(ID,L)|TL]):- append(T,[(Key,Value)],L).
 initializeDict(ID,Key,Value,[H|T],[H|Env]):- H \= (ID,_), initializeDict(ID,Key,Value,T,Env).
 
-%Finds the dictionary identifier in the environment
+% Finds the dictionary identifier in the environment
 lookupDict(ID,Key,[(ID,T)|_],Val):- lookupDict(T,Key,Val).
 lookupDict(ID,Key,[H|T],Val):- H \= (ID,_), lookupDict(ID,Key,T,Val).
 
-%Finds the value for a given key within the dictionary
+% Finds the value for a given key within the dictionary
 lookupDict([(Key,Val)|_],Key,Val).
 lookupDict([H|T],Key,Val):- H \= (Key,_), lookupDict(T,Key,Val).
 
-%To update the dictionary
+% To update the dictionary
 updateDict(ID,Key,Value,[(ID,T)|TL],[(ID,L)|TL]):- updateDict(T,Key,Value,L).
 updateDict(ID,Key,Value,[H|T],[H|Env]):-  H \= (ID,_), updateDict(ID,Key,Value,T,Env).
 
-%Updates a particular key within the dictionary
+% Updates a particular key within the dictionary
 updateDict([(Key,_)|T],Key,Value,[(Key,Value)|T]).
 updateDict([H|T],Key,Value,[H|L]):- H \= (Key,_), updateDict(T,Key,Value,L).
