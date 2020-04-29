@@ -39,7 +39,7 @@ read_file(Stream,[X|L]) :-
     read_file(Stream,L).
 
 % Tables are used to tackle left recursion
-:- table expr/3, term/3, value/3.
+:- table expr/3, term/3, value/3, boolean/3.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%% Program Section %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -286,8 +286,8 @@ boolean(t_boolean(true)) --> [true].
 boolean(t_boolean(false)) --> [false].
 boolean(t_boolean_equal(E1, E2)) --> expression(E1), [==], expression(E2).
 boolean(t_boolean_not(B)) --> [not], boolean(B).
-boolean(t_boolean_and(E1, E2)) --> expression(E1), [and], expression(E2).
-boolean(t_boolean_or(E1, E2)) --> expression(E1), [or], expression(E2).
+boolean(t_boolean_and(E1, E2)) --> boolean(E1), [and], boolean(E2).
+boolean(t_boolean_or(E1, E2)) --> boolean(E1), [or], boolean(E2).
 boolean(t_boolean_lt(E1, E2)) --> expression(E1), [<], expression(E2).
 boolean(t_boolean_gt(E1, E2)) --> expression(E1), [>], expression(E2).
 boolean(t_boolean_lteq(E1, E2)) --> expression(E1), [<=], expression(E2).
@@ -319,14 +319,15 @@ eval_boolean(t_boolean_and(E1, E2), Env, NewEnv, Val) :-
     and(Val1, Val2, Val).
 
 % Or Evaluation
-eval_boolean(t_boolean_and(E1, E2), Env, NewEnv, true) :-
+eval_boolean(t_boolean_or(E1, E2), Env, NewEnv, true) :-
     eval_boolean(E1, Env, NewEnv, true); eval_boolean(E2, Env, NewEnv, true).
 
-eval_boolean(t_boolean_and(E1, E2), Env, NewEnv, false) :-
+eval_boolean(t_boolean_or(E1, E2), Env, NewEnv, false) :-
     eval_boolean(E1, Env, NewEnv, false), eval_boolean(E2, Env, NewEnv, false).
 
 eval_boolean(t_boolean_or(E1, E2), Env, NewEnv, Val) :-
-    eval_boolean(E1, Env, NewEnv, Val1), eval_boolean(E2, Env, NewEnv, Val2), or(Val1, Val2, Val).
+    eval_expression(E1, Env, NewEnv, Val1), eval_expression(E2, Env, NewEnv, Val2),
+    or(Val1, Val2, Val).
 
 % Relational Operators
 eval_boolean(t_boolean_lt(E1, E2), Env, NewEnv, Val) :-
@@ -376,6 +377,7 @@ less_eq(Val1, Val2, false) :- Val1 > Val2.
 % Greater than or Equal to Predicate
 greater_eq(Val1, Val2, true) :- Val1 >= Val2.
 greater_eq(Val1, Val2, false) :- Val1 < Val2.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%% Expression Grammar %%%%%%%%%%%%%%%%%%%%%%%%%
