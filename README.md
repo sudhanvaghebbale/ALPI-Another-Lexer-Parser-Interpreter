@@ -1,4 +1,4 @@
-# SER502-Spring2020-Team26
+# ALPI - Another Lexer Parser Interpreter
 This repository contains code, sample programs and the entire documentation regarding the implementation details of our new programming language, **ALPI - Another Lexer Parser Interpreter**.
 
 ## Tools used to build ALPI
